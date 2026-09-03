@@ -1,0 +1,423 @@
+/* ==========================================================================
+   RAVYN Games — placeholder identity.
+   Colour comes from the supplied palette; type is still a system stack.
+   The one thing to know before editing: --bg and --flood are load-bearing.
+   Effect 4's occlusion and the gallery edge fades read them as "the ground",
+   so a copy that does not match its section stops disappearing.
+   ========================================================================== */
+
+:root {
+  /* Supplied palette: #0A0C12 #023661 #3F3A42 #76828E #DB5227.
+     All five are used. --text is the one derived value — the palette has no
+     light tone and body copy needs one. */
+  --bg:        #0a0c12;   /* the ground */
+  --surface:   #171a22;   /* derived from --bg, for card and image beds */
+  --line:      #3f3a42;   /* rules and borders */
+  --text:      #eef1f5;   /* derived */
+  --muted:     #76828e;   /* secondary copy */
+
+  --accent:    #db5227;   /* the sharp word, and nothing else */
+  --flood:     #023661;   /* the loud ground: the sliding panel and the footer */
+  --flood-ink: #01223f;   /* darker flood, for occluders inside flood sections */
+
+  --pad: clamp(20px, 4vw, 72px);
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --sans: "Helvetica Neue", Inter, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+
+  /* ── THE FONT SWAP HAPPENS HERE ───────────────────────────────────────
+     --display drives the headline, the marquee and the footer wordmark.
+     Nothing else needs to change. To bring in a web font:
+
+       1. add the @font-face block or the <link> in index.html, then
+       2. --display: "Your Face", var(--sans);
+
+     Keep var(--sans) as the tail so the page still reads while the font
+     loads or if it fails. After swapping, check two things: the footer
+     wordmark's --step (it is in em, so it should hold, but a face with a
+     very different cap height will want a nudge) and the hero headline's
+     line-height. main.js already calls ScrollTrigger.refresh() on
+     document.fonts.ready, so the sticky offsets remeasure themselves. */
+  --display: var(--sans);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.45;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+img { max-width: 100%; display: block; }
+a { color: inherit; text-decoration: none; }
+
+.mono { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+.muted { color: var(--muted); }
+.accent { color: var(--accent); }
+.wrap { padding-inline: var(--pad); max-width: 1600px; margin-inline: auto; width: 100%; }
+
+h2 {
+  font-family: var(--display);
+  font-size: clamp(38px, 7vw, 96px);
+  line-height: .95; letter-spacing: -.03em; font-weight: 700;
+  margin: .35em 0 .5em;
+}
+.big { font-size: clamp(48px, 11vw, 170px); }
+.lead { font-size: clamp(17px, 1.6vw, 24px); max-width: 46ch; color: #cfcfd6; }
+
+/* editorial two-column: index left, content in the wider right column */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 7fr);
+  gap: clamp(18px, 4vw, 72px);
+  align-items: start;
+}
+.grid > :first-child { padding-top: .55em; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; gap: 14px; } .grid > :first-child { padding-top: 0; } }
+
+/* section index. Deliberately larger than .mono — it sits alone in a column
+   against a 24px lead, and at 12px it read as a caption rather than a label. */
+.idx { color: var(--accent); font-size: clamp(14px, 1.15vw, 18px); letter-spacing: .08em; }
+.idx b { font-weight: 400; }
+
+/* The accent word leans. On "flight" the slant does half the work; keeping it
+   on the contact line too makes it a rule rather than a one-off. */
+h1 em, h2 em { font-style: italic; color: var(--accent); }
+
+.section { padding-block: clamp(90px, 16vh, 220px); position: relative; }
+.small { margin-top: 28px; }
+
+/* ── nav: text only, no bar, nothing occluded ─────────────────────────── */
+.nav {
+  position: fixed; inset: 0 0 auto 0; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: clamp(14px, 2.2vh, 26px) var(--pad);
+  pointer-events: none;
+  text-shadow: 0 1px 18px rgba(0,0,0,.75), 0 0 4px rgba(0,0,0,.5);
+}
+.nav a { pointer-events: auto; }
+.nav__mark { font-weight: 700; letter-spacing: -.02em; font-size: clamp(18px, 1.35vw, 25px); color: var(--accent); }
+.nav__mark span { color: var(--muted); font-weight: 400; margin-left: .35em; }
+.nav__links { display: flex; align-items: center; gap: clamp(14px, 2vw, 34px); font-size: clamp(15px, 1.05vw, 19px); }
+.nav__links a { opacity: .82; transition: opacity .25s, color .25s; }
+.nav__links a:hover { opacity: 1; color: var(--accent); }
+.nav__cta { display: inline-flex; align-items: center; gap: .55em; padding-left: clamp(14px, 2vw, 34px); border-left: 1px solid var(--line); }
+.nav__cta i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: block; }
+@media (max-width: 640px) { .nav__links a:not(.nav__cta) { display: none; } }
+
+/* ── the 3D mark ──────────────────────────────────────────────────────
+   Only the measurement pose. main.js reads it once, then owns
+   position/top/left/scale every frame. See Effect 5b in docs.          */
+.logo3d {
+  position: absolute; z-index: 3; pointer-events: none;
+  top: 52vh; left: 50vw;
+  width: min(70vw, 920px); height: 44vh;
+  transform: translate(-50%, -50%);
+}
+.logo3d__canvas { width: 100%; height: 100%; }
+.logo3d__canvas canvas { display: block; width: 100% !important; height: 100% !important; }
+@media (max-width: 640px) { .logo3d { top: 46vh; width: 78vw; height: 26vh; } }
+
+/* ── Effect 1 — hero reveal ───────────────────────────────────────────── */
+.hero { height: 260vh; position: relative; }
+.hero__screen {
+  position: sticky; top: 0; height: 100svh;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: var(--pad); padding-bottom: clamp(28px, 6vh, 70px);
+  overflow: hidden;
+}
+.hero__eyebrow {
+  margin: 0 0 auto; padding-top: clamp(70px, 12vh, 130px);
+  font-size: clamp(15px, 1.5vw, 20px); letter-spacing: .1em;
+}
+.hero__title {
+  font-family: var(--display);
+  font-size: clamp(44px, 9vw, 150px);
+  line-height: .92; letter-spacing: -.04em; font-weight: 700; margin: 0 0 .3em;
+}
+.hero__line { display: block; opacity: 0; will-change: opacity, transform; }
+.hero__sub { max-width: 40ch; color: #cfcfd6; opacity: 0; will-change: opacity, transform; }
+.hero__scroll { color: var(--muted); margin: clamp(20px, 4vh, 44px) 0 0; }
+
+/* ── marquee ──────────────────────────────────────────────────────────── */
+.marquee { overflow: hidden; padding-block: clamp(18px, 3vh, 40px); border-block: 1px solid var(--line); }
+.marquee__track { display: flex; width: max-content; will-change: transform; }
+.marquee__item {
+  display: inline-flex; align-items: center; gap: .6em;
+  font-family: var(--display);
+  font-size: clamp(34px, 6vw, 92px); font-weight: 700;
+  letter-spacing: -.03em; white-space: nowrap; padding-right: .5em;
+}
+.marquee__dot { color: var(--accent); }
+
+/* ── Effect 2 — panel from the right, in the loud colour ──────────────────
+   The stage is hold + slide, and BOTH numbers are mirrored in effects.js.
+   If the slide budget is smaller than the panel's travel, the panel crosses
+   the screen faster than you scroll and the whole thing reads as a teleport. */
+.reveal {
+  --hold:  min(55vw, 800px);
+  --slide: min(95vw, 1800px);
+  height: calc(100svh + var(--hold) + var(--slide));
+  position: relative;
+}
+.reveal__screen { position: sticky; top: 0; height: 100svh; overflow: hidden; }
+/* Both screens start their content on the same line. Centring each block to
+   its own content height put the two section indices at different heights,
+   so the label appeared to jump as the panel took over. */
+.reveal__back, .reveal__panel {
+  position: absolute; inset: 0;
+  display: flex; align-items: start;
+  padding-top: clamp(92px, 23vh, 230px);
+}
+.reveal__back { background: var(--bg); }
+.reveal__panel {
+  background: var(--flood);
+  transform: translate3d(100%, 0, 0);
+  will-change: transform;
+}
+.reveal__panel .lead, .reveal__panel .list span { color: rgba(255,255,255,.72); }
+.reveal__panel .idx { color: var(--accent); }
+.list { list-style: none; margin: 0; padding: 0; max-width: 68ch; }
+.list li { display: grid; gap: .3em; padding: clamp(16px, 2.4vh, 30px) 0; border-top: 1px solid rgba(255,255,255,.2); }
+.list b { font-size: clamp(20px, 2.4vw, 34px); letter-spacing: -.02em; }
+.list span { color: var(--muted); }
+
+/* ── Effect 6 — hold-to-skim gallery ──────────────────────────────────── */
+.skim-section { padding-bottom: clamp(60px, 10vh, 140px); }
+.skim {
+  position: relative; width: 100vw;
+  height: 44vw; max-height: 72vh; min-height: 300px;
+  margin-top: clamp(30px, 5vw, 70px);
+  overflow: hidden; cursor: pointer;
+  touch-action: pan-y;                 /* JS owns X, browser keeps Y */
+  user-select: none; -webkit-user-select: none;
+}
+/* on a phone vw and vh diverge hard — 68vw filled only a third of the screen
+   while the desktop strip filled ~70%. Sized off vh so the strip reads the
+   same on both. */
+@media (max-width: 640px) { .skim { height: 50vh; min-height: 240px; max-height: none; } }
+.skim::before, .skim::after {
+  content: ""; position: absolute; top: 0; height: 100%; width: 7vw;
+  z-index: 2; pointer-events: none; opacity: .85;
+}
+.skim::before { left: 0;  background: linear-gradient(90deg,  var(--bg), transparent); }
+.skim::after  { right: 0; background: linear-gradient(270deg, var(--bg), transparent); }
+.skim__scale { position: absolute; top: 0; left: 0; height: 100%; width: max-content; transform-origin: 50vw 50%; will-change: transform; }
+.skim__loop  { display: flex; align-items: stretch; gap: 2.4vw; height: 100%; width: max-content; position: relative; will-change: transform; }
+@media (max-width: 640px) { .skim__loop { gap: 14px; } }
+.skim__item { flex: 0 0 auto; height: 100%; margin: 0; overflow: hidden; border-radius: 12px; pointer-events: none; background: var(--surface); }
+.skim__item img { height: 100%; width: auto; max-width: none; object-fit: cover; user-select: none; -webkit-user-drag: none; }
+.skim__cursor {
+  position: fixed; top: 0; left: 0; z-index: 21;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: clamp(7px, .9vw, 14px) clamp(12px, 1.4vw, 20px);
+  border-radius: 999px; background: var(--accent); color: #140702;
+  font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+  line-height: 1; white-space: nowrap;
+  opacity: 0; pointer-events: none; will-change: transform, opacity;
+}
+@media (max-width: 900px) { .skim__cursor { display: none; } }
+
+/* ── the watch — they look away, then they look at you ────────────────── */
+.watch { height: 260vh; position: relative; }
+.watch__screen {
+  position: sticky; top: 0; height: 100svh; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: center;
+  gap: clamp(24px, 5vh, 60px);
+}
+.watch__row {
+  display: flex; gap: clamp(10px, 1.6vw, 28px);
+  padding-inline: var(--pad); justify-content: center;
+  perspective: 1400px;
+}
+.watch__card { margin: 0; flex: 1 1 0; max-width: 340px; min-width: 0; }
+.watch__face {
+  position: relative; aspect-ratio: 3 / 4;
+  background: linear-gradient(160deg, var(--surface), #16161d);
+  border: 1px solid var(--line); border-radius: 14px;
+  transform-style: preserve-3d; will-change: transform;
+  display: flex; align-items: center; justify-content: center; gap: 14%;
+  overflow: hidden;
+}
+.watch__face::after {                       /* placeholder crosshatch */
+  content: ""; position: absolute; inset: 0; opacity: .5;
+  background: repeating-linear-gradient(135deg, transparent 0 9px, rgba(255,255,255,.03) 9px 10px);
+}
+.watch__eye {
+  position: relative; z-index: 1;
+  width: 15%; aspect-ratio: 1; border-radius: 50%;
+  background: var(--muted); will-change: transform;
+}
+.watch__card figcaption { margin-top: 12px; color: var(--muted); }
+@media (max-width: 700px) { .watch__row { flex-wrap: wrap; } .watch__card { flex: 1 1 40%; } }
+
+/* ── button ───────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: .7em;
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: .85em 1.4em; font-size: clamp(15px, 1.4vw, 20px);
+  transition: border-color .3s, background .3s, color .3s;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(219,82,39,.1); }
+.btn i { color: var(--accent); font-style: normal; }
+
+/* ── Effect 4 — layered wordmark, on the loud ground ──────────────────── */
+.footer {
+  /* the trail's whole travel budget. 210vh made the fan crawl — at 140vh the
+     stage still pins for 40vh, which is enough to read as a held section */
+  height: 140vh; position: relative;
+  background: var(--flood); color: #fff;
+}
+.footer__screen {
+  position: sticky; top: 0; height: 100svh; overflow: hidden;
+  display: grid; grid-template-rows: auto 1fr auto;
+  /* top rail has to clear the fixed nav, which floats over this section */
+  padding: clamp(72px, 11vh, 104px) 0 clamp(20px, 4vh, 46px);
+}
+/* the fanned layers travel up past the stack box, so both rails have to
+   sit above them or they get painted over */
+.footer__links, .footer__meta { position: relative; z-index: 2; }
+.footer__links {
+  display: flex; flex-wrap: wrap; gap: clamp(14px, 2.4vw, 40px);
+  border-bottom: 1px solid rgba(255,255,255,.22); padding-bottom: clamp(14px, 2.4vh, 26px);
+}
+.footer__links a { display: inline-flex; align-items: center; gap: .5em; opacity: .8; transition: opacity .25s, color .25s; }
+.footer__links a:hover { opacity: 1; color: var(--accent); }
+.footer__links i { font-style: normal; }
+.footer__meta {
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  color: rgba(255,255,255,.62);
+  border-top: 1px solid rgba(255,255,255,.22); padding-top: clamp(12px, 2vh, 22px);
+}
+.footer__meta a:hover { color: var(--accent); }
+
+.stack {
+  --p: 0;
+  --step: 0.2em;     /* travel per index step, measured against the cap height.
+                        Positive: the trail grows downward, so at rest the word
+                        sits high with the room it is about to fill below it
+                        rather than a dead gap above it. */
+  --fan: 1em;        /* 5 layers × 0.2em — the room the trail grows into */
+
+  /* the display size lives here so --step and --fan are em of the wordmark,
+     not of the 16px root */
+  /* Word + trail measure 1.72em together (0.72 cap + 1.0 fan). The two rails
+     and the screen padding eat about 200px, so cap the size to whatever is
+     actually left — otherwise the block either overflows the screen or floats
+     with dead space under it, depending on the window. */
+  /* the vw term is per-letter sensitive: RAVYN is five caps where KROW was
+     four, so it needs roughly a fifth less size to span the same width */
+  font-size: clamp(62px, min(22.4vw, calc((100svh - 200px) / 1.72)), 415px);
+
+  position: relative;
+  isolation: isolate;                 /* keep z-index local to this component */
+  align-self: center;
+  width: 100%;
+  padding-inline: var(--pad);
+  /* reserving the fan as padding means align-self centres the whole assembly,
+     word plus trail, instead of centring the word and letting the trail spill */
+  padding-bottom: var(--fan);
+}
+
+/* Front and layers share typography AND box metrics. Three rules make this
+   work, and all three are easy to get wrong:
+
+   1. The FRONT needs a plate too. Without one, every layer shows through the
+      gaps of the main word instead of only above it — including inside its
+      counters, which is what made the O look chewed.
+   2. The box IS the plate, so the box has to hug the letters. A normal line
+      box carries roughly 0.23em of dead space above the cap line; with that
+      in the way a step smaller than 0.23em lifts nothing but empty plate and
+      the layers simply never appear.
+   3. Front and layers must be metrically identical or the copies drift. */
+.stack__front, .stack__layer {
+  display: block;
+  font-family: var(--display);
+  font-size: inherit;                 /* the display size is set on .stack */
+  font-weight: 700;
+  letter-spacing: -.055em;
+  text-align: center;
+  background: var(--flood);           /* every copy carries its own ground */
+
+  /* Fallback: tuned to Helvetica's cap height. Replaced below wherever the
+     browser can do it properly, so a font swap does not need this number. */
+  line-height: .72;
+}
+
+/* Trims the box to exactly cap-height→baseline for ANY face, which is what
+   an <svg> logo gets for free and text does not. Swap --display and this
+   keeps holding; the .72 above is only for browsers without it. */
+@supports (text-box-trim: trim-both) {
+  .stack__front, .stack__layer {
+    line-height: 1;
+    text-box: trim-both cap alphabetic;
+  }
+}
+.stack__front { position: relative; z-index: 9; }
+.stack__front em { font-style: normal; color: var(--accent); }
+
+/* matched to the front's content box, not the padded box, so the plates
+   line up edge to edge */
+.stack__layer {
+  position: absolute;
+  top: 0; bottom: var(--fan); left: var(--pad); right: var(--pad);
+  color: color-mix(in srgb, #fff calc(100% - var(--i) * 14%), var(--flood-ink));
+  transform: translateY(calc(var(--p) * var(--i) * var(--step)));
+  will-change: transform;
+}
+/* the O keeps full strength all the way back, so the trail reads as one
+   repeated motif instead of the accent fading out with the greys */
+.stack__layer em { font-style: normal; color: var(--accent); }
+
+/* desktop hides the phone block entirely */
+.footer__pitch, .footer__rows { display: none; }
+
+/* ── phone footer ─────────────────────────────────────────────────────
+   A pinned, centre-weighted composition needs width. On a phone it just
+   leaves the wordmark stranded in a field of navy, so the whole section
+   unstacks and scrolls normally instead.                                */
+@media (max-width: 640px) {
+  .footer { height: auto; min-height: 100svh; }
+  .footer__screen {
+    position: static; height: auto; display: block; overflow: visible;
+    padding: clamp(88px, 13vh, 122px) 0 clamp(22px, 4vh, 38px);
+  }
+  .footer__links, .footer__meta { display: none; }   /* the row list replaces both */
+
+  /* the 23.5vw ceiling is tuned to stop the desktop footer clipping; on a
+     phone it leaves the wordmark small against the screen */
+  .stack { font-size: clamp(64px, 21.4vw, 160px); align-self: auto; }
+
+  .footer__pitch { display: block; color: rgba(255,255,255,.72); line-height: 2.1; margin-top: clamp(20px, 4vh, 36px); }
+  .footer__pitch p { margin: 0; }
+
+  .footer__rows {
+    display: block; list-style: none; padding: 0 var(--pad);
+    margin: clamp(34px, 7vh, 62px) 0 0;
+  }
+  .footer__rows li { border-top: 1px solid rgba(255,255,255,.28); }
+  .footer__rows li:last-child { border-bottom: 1px solid rgba(255,255,255,.28); }
+  .footer__rows a {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 15px 0; font-size: 13px;
+  }
+  .footer__rows i { font-style: normal; opacity: .75; }
+}
+
+/* ── reduced motion ───────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .hero__line, .hero__sub { opacity: 1; }
+  .hero, .reveal, .watch, .footer { height: auto; }
+  .hero__screen, .reveal__screen, .watch__screen, .footer__screen { position: static; height: auto; }
+  .hero__screen { min-height: 100svh; }
+  .reveal__back, .reveal__panel { position: static; transform: none; padding-block: clamp(60px,12vh,140px); }
+  .watch__face { transform: none !important; }
+  .footer__screen { display: block; }
+  .stack { margin-block: clamp(40px, 8vh, 90px); }
+}

@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAVYN Games</title>
+<meta name="description" content="RAVYN Games — a games studio.">
+<link rel="stylesheet" href="./styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0c12'/%3E%3Cpath d='M7 22l9-11 3 3 4-6 2 3-3 4 4 1-6 2-3 5z' fill='%23db5227'/%3E%3C/svg%3E">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+
+<body>
+
+<!-- ── nav: no bar, just words. The mark flies into the gap between them. ── -->
+<header class="nav">
+  <a class="nav__mark" href="#top">RAVYN<span>Games</span></a>
+  <nav class="nav__links">
+    <a href="#work">Work</a>
+    <a href="#team">Team</a>
+    <a href="#contact" class="nav__cta">Get in touch <i></i></a>
+  </nav>
+</header>
+
+<!-- ── the 3D raven. CSS only sets the measurement pose; JS takes over. ── -->
+<div class="logo3d logo3d--hero" id="logo3d"><div class="logo3d__canvas"></div></div>
+
+<main id="top">
+
+  <!-- ── Effect 1 — hero reveal ── -->
+  <section class="hero" id="hero">
+    <div class="hero__screen">
+      <h1 class="hero__title">
+        <span class="hero__line">Where clever games</span>
+        <span class="hero__line">take <em class="accent">flight</em>.</span>
+      </h1>
+      <p class="hero__sub">
+        RAVYN Games is a small studio building sharp, strange, playable things.
+        We take the long way round and it shows.
+      </p>
+      <p class="hero__scroll mono">Scroll to open the nest</p>
+    </div>
+  </section>
+
+  <!-- ── marquee ── -->
+  <div class="marquee" id="marquee"><div class="marquee__track"></div></div>
+
+  <!-- ── Effect 2 — panel slides in from the right ── -->
+  <section class="reveal" id="studio">
+    <div class="reveal__screen">
+      <div class="reveal__back">
+        <div class="wrap grid">
+          <p class="mono idx">1 <b class="muted">/ How we work</b></p>
+          <div>
+            <h2>Small team.<br>Whole game.</h2>
+            <p class="lead">
+              No handoffs, no telephone. The people who design it are the people
+              who build it and the people who answer for it.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="reveal__panel">
+        <div class="wrap grid">
+          <p class="mono idx">2 <b>/ What you get</b></p>
+          <ul class="list">
+            <li><b>Direction</b><span>Art, systems and tone decided together, early.</span></li>
+            <li><b>Production</b><span>Vertical slice first. Everything after that is proof.</span></li>
+            <li><b>Release</b><span>We ship, then we stay. Patches are part of the work.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Effect 6 — hold-to-skim gallery ── -->
+  <section class="section skim-section" id="work">
+    <div class="wrap grid">
+      <p class="mono idx">3 <b class="muted">/ Work</b></p>
+      <p class="lead">
+        Fourteen slots, filled with placeholders until the real thing lands.
+        Hold the strip down and it runs.
+      </p>
+    </div>
+
+    <div class="skim" id="skim">
+      <div class="skim__scale">
+        <div class="skim__loop"></div>
+      </div>
+    </div>
+
+    <div class="wrap small">
+      <span class="mono muted">Drag on touch · hold to skim on desktop</span>
+    </div>
+  </section>
+
+  <!-- ── the watch — look away, then look at you ── -->
+  <section class="watch" id="team">
+    <div class="watch__screen">
+      <div class="wrap grid">
+        <p class="mono idx">4 <b class="muted">/ The team</b></p>
+        <p class="lead">
+          Keep scrolling and they turn round. Empty frames for now —
+          real portraits drop straight in.
+        </p>
+      </div>
+      <div class="watch__row" id="watch">
+        <figure class="watch__card">
+          <div class="watch__face"><span class="watch__eye"></span><span class="watch__eye"></span></div>
+          <figcaption class="mono">Placeholder · Design</figcaption>
+        </figure>
+        <figure class="watch__card">
+          <div class="watch__face"><span class="watch__eye"></span><span class="watch__eye"></span></div>
+          <figcaption class="mono">Placeholder · Code</figcaption>
+        </figure>
+        <figure class="watch__card">
+          <div class="watch__face"><span class="watch__eye"></span><span class="watch__eye"></span></div>
+          <figcaption class="mono">Placeholder · Art</figcaption>
+        </figure>
+        <figure class="watch__card">
+          <div class="watch__face"><span class="watch__eye"></span><span class="watch__eye"></span></div>
+          <figcaption class="mono">Placeholder · Audio</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── outro ── -->
+  <section class="section" id="contact">
+    <div class="wrap grid">
+      <p class="mono idx">5 <b class="muted">/ Contact</b></p>
+      <div>
+        <h2 class="big">Bring us<br>something <em class="accent">odd</em>.</h2>
+        <a class="btn" href="mailto:hello@ravyngames.com">
+          <span>hello@ravyngames.com</span><i>&#8599;</i>
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── Effect 4 — layered wordmark, centred on the loud ground ── -->
+<footer class="footer" id="footer">
+  <div class="footer__screen">
+
+    <div class="wrap footer__links mono">
+      <a href="#" data-placeholder>LinkedIn <i>&#8599;</i></a>
+      <a href="#" data-placeholder>GitHub <i>&#8599;</i></a>
+      <a href="#" data-placeholder>Instagram <i>&#8599;</i></a>
+      <a href="#" data-placeholder>TikTok <i>&#8599;</i></a>
+    </div>
+
+    <div class="stack" id="stack" style="--p:0">
+      <span class="stack__layer" style="--i:5" aria-hidden="true">RA<em>V</em>YN</span>
+      <span class="stack__layer" style="--i:4" aria-hidden="true">RA<em>V</em>YN</span>
+      <span class="stack__layer" style="--i:3" aria-hidden="true">RA<em>V</em>YN</span>
+      <span class="stack__layer" style="--i:2" aria-hidden="true">RA<em>V</em>YN</span>
+      <span class="stack__layer" style="--i:1" aria-hidden="true">RA<em>V</em>YN</span>
+      <span class="stack__front">RA<em>V</em>YN</span>
+    </div>
+
+    <!-- Phone only. The centred, pinned composition needs width it does not
+         have on a narrow screen, so there the footer unstacks into a block
+         that simply scrolls: wordmark, pitch, then one row per link. -->
+    <div class="wrap footer__pitch mono">
+      <p>It's just elegant.</p>
+      <p>Be happier — contact us.</p>
+      <p>No time to hesitate.</p>
+      <p>We know what you want. Just get in touch.</p>
+    </div>
+
+    <ul class="footer__rows mono">
+      <li><a href="#" data-placeholder>LinkedIn <i>&#8599;</i></a></li>
+      <li><a href="#" data-placeholder>GitHub <i>&#8599;</i></a></li>
+      <li><a href="#" data-placeholder>Instagram <i>&#8599;</i></a></li>
+      <li><a href="#" data-placeholder>TikTok <i>&#8599;</i></a></li>
+      <li><a href="mailto:hello@ravyngames.com">Get in touch <i>&#8599;</i></a></li>
+      <li><a href="./privacy.html">Privacy policy <i>&#8599;</i></a></li>
+    </ul>
+
+    <div class="wrap footer__meta mono">
+      <span>RAVYN Games · 2026</span>
+      <a href="./privacy.html">Privacy policy</a>
+    </div>
+
+  </div>
+</footer>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
