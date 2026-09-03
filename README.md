@@ -22,11 +22,41 @@ privacy.html        standalone, deliberately loud, honest placeholder
 styles.css          identity tokens and all layout
 src/main.js         Lenis↔GSAP bootstrap, wiring, asset list
 src/logo3d.js       Effect 5b — the extruded chrome raven that docks into the nav
-src/effects.js      Effects 1, 2, 4, 6, the watch section, the marquee
+src/effects.js      Effects 1, 2, 4, 6, the watch section, the marquee, the raven
 assets/ravyn-bird.svg   traced from KROW_LOGO.svg — #body, #wing, #facets, #pivot-wing
+assets/standing-raven.webp  section 1's bird, cut out; .png beside it is the master
+assets/flowers/     11 blooms cut to petals only, served as webp
+assets/favicon/     the icon set, cut out of Krow.PNG
 assets/works/       14 generated placeholders
 docs/scroll-effects.md the technique reference every effect is built from
 ```
+
+## The raven's flower
+
+Section 1 has a raven with a twig in its beak and a flower on the left end of
+it. Hovering the bird rolls the flower; leaving stops it, and whichever bloom
+is showing is the one that stays. A tap does the same on touch, focus does it
+from the keyboard, and `prefers-reduced-motion` gets one flower per visit
+rather than nine a second.
+
+Two things to know before moving anything:
+
+- **`--tip-x` / `--tip-y` are measured off the artwork**, not eyeballed: the
+  twig's left end is pixel (97, 329) in a 1024×1536 frame. They only keep
+  landing on the twig while the `.raven` box matches that aspect ratio exactly,
+  which is why the bird is sized by height with `aspect-ratio` locked and is
+  never allowed to letterbox.
+- **Every flower sits in the DOM at once** and the roll just moves a class.
+  Swapping `src` instead looked identical on a warm cache and dropped frames on
+  a cold one.
+
+`black-rose` and `black-cosmos` are cut and sitting in `assets/flowers/` but are
+left out of the rotation in `main.js` — against `--bg` they are a silhouette of
+nothing. The flower list there is ordered so no two neighbours share a hue.
+
+The source images are stock photos of unknown licence; `20a62cf8….jpg` is a
+watermarked Vecteezy comp and is deliberately not used. Clear the rights, or
+swap in owned photography, before this goes anywhere public.
 
 ## Colour
 

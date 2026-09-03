@@ -188,6 +188,119 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
 .list b { font-size: clamp(20px, 2.4vw, 34px); letter-spacing: -.02em; }
 .list span { color: var(--muted); }
 
+/* ── the raven, and the flower on the end of its twig ──────────────────
+   The whole thing rides the sticky .reveal__screen, so it holds its place
+   on screen for as long as section 1 is up. Nothing here scrolls itself.
+
+   --tip-x/--tip-y are the left end of the twig, measured off the artwork:
+   (97, 329) in a 1024x1536 frame. The bird is sized by HEIGHT with its
+   aspect ratio locked, never letterboxed, because those two percentages
+   only land on the twig while the box matches the image exactly.        */
+.studio__side { min-width: 0; }
+.raven {
+  --tip-x: 9.47%;
+  --tip-y: 21.42%;
+  --bloom: 21%;
+  position: relative;
+  margin: clamp(14px, 2.4vh, 30px) 0 0;
+  height: min(58vh, 620px);
+  aspect-ratio: 1024 / 1536;
+  max-width: 100%;
+  cursor: pointer;
+}
+.raven__bird {
+  display: block; width: 100%; height: 100%;
+  object-fit: contain; object-position: left top;
+  /* the artwork is lit warm; a touch of cool keeps it in the page's key */
+  filter: saturate(.92) contrast(1.04);
+}
+
+/* Every bloom is stacked in this box and only one is shown. Sizing the box
+   square with object-fit: contain means a wide flower and a tall one still
+   share a centre, so the roll does not jitter around the twig. */
+.raven__bloom {
+  position: absolute;
+  left: var(--tip-x); top: var(--tip-y);
+  width: var(--bloom); aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.raven__bloom img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transform: scale(.82) rotate(-8deg);
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,.55));
+}
+.raven__bloom img.is-on {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+  transition: opacity .13s ease, transform .22s cubic-bezier(.34,1.56,.64,1);
+}
+/* while rolling, each swap is instant - the spring above would blur the
+   sequence into mush at 110ms a frame */
+.raven.is-rolling .raven__bloom img.is-on { transition: none; }
+
+/* ── the nudge ────────────────────────────────────────────────────────
+   Sits under the bloom pointing up at it, and retires for good the first
+   time the raven is actually hovered. */
+.raven__hint {
+  position: absolute;
+  left: calc(var(--tip-x) + 5%); top: calc(var(--tip-y) + 13%);
+  display: flex; align-items: center; gap: 7px;
+  /* it has to cross the bird's chest to sit near the bloom, and orange on
+     blue-black feathers is unreadable, so it carries its own ground */
+  padding: 5px 11px 5px 7px;
+  border-radius: 999px;
+  background: rgba(10, 12, 18, .74);
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
+  backdrop-filter: blur(6px);
+  color: var(--accent);
+  pointer-events: none;
+  transition: opacity .45s ease, transform .45s ease;
+}
+/* curves up and to the left, which is where the bloom is from here */
+.raven__arrow {
+  width: clamp(26px, 2.6vw, 40px); flex: none;
+  fill: none; stroke: currentColor; stroke-width: 3.5;
+  stroke-linecap: round; stroke-linejoin: round;
+  opacity: .9;
+}
+.raven__hintText {
+  font-family: var(--mono); font-size: clamp(10px, .78vw, 12px);
+  letter-spacing: .12em; text-transform: uppercase; white-space: nowrap;
+  display: flex; align-items: center; gap: 7px;
+}
+.raven__hintText i {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: currentColor; flex: none;
+  animation: ravenPulse 1.9s ease-in-out infinite;
+}
+@keyframes ravenPulse {
+  0%, 100% { opacity: 1;  transform: scale(1); }
+  50%      { opacity: .3; transform: scale(.6); }
+}
+.raven.is-used .raven__hint { opacity: 0; transform: translateY(6px); }
+
+/* "hover" is a lie on a touch screen, where the tap handler runs instead */
+.raven__verb--tap { display: none; }
+@media (hover: none) {
+  .raven__verb--hover { display: none; }
+  .raven__verb--tap { display: inline; }
+}
+
+.raven:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: 4px; }
+.raven:focus:not(:focus-visible) { outline: none; }
+
+@media (max-width: 900px) {
+  .raven { height: min(52vh, 480px); margin-inline: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .raven__hintText i { animation: none; }
+  .raven__bloom img.is-on { transition: none; }
+}
+
 /* ── Effect 6 — hold-to-skim gallery ──────────────────────────────────── */
 .skim-section { padding-bottom: clamp(60px, 10vh, 140px); }
 .skim {

@@ -58,6 +58,77 @@ export function initPanel() {
     });
 }
 
+/* ── the raven's flower ───────────────────────────────────────────────
+   Hover rolls the bloom on the end of the twig; leaving stops it wherever
+   it got to, so whichever flower is showing is the one you keep.
+
+   The images are built once and all live in the DOM together. Rolling only
+   moves an is-on class between them, so a swap costs no decode and cannot
+   flash a gap on a slow connection. Preloading via new Image() and swapping
+   src looked identical on a warm cache and dropped frames on a cold one.  */
+export function initRaven({ flowers, period = 110 }) {
+  const root = document.getElementById('raven');
+  const bloom = document.getElementById('ravenBloom');
+  if (!root || !bloom || !flowers?.length) return;
+
+  const imgs = flowers.map((src, i) => {
+    const img = new Image();
+    img.src = src;
+    img.alt = '';
+    img.decoding = 'async';
+    if (i === 0) img.className = 'is-on';
+    bloom.append(img);
+    return img;
+  });
+
+  let at = 0;
+  let timer = 0;
+  const show = (i) => {
+    imgs[at].classList.remove('is-on');
+    at = (i + imgs.length) % imgs.length;
+    imgs[at].classList.add('is-on');
+  };
+
+  const start = () => {
+    root.classList.add('is-used');            // the nudge has done its job
+    /* Reduced motion still gets a new flower, just one per visit instead of
+       nine a second - the point of the interaction survives, the strobe does not. */
+    if (still) { show(at + 1); return; }
+    if (timer) return;
+    root.classList.add('is-rolling');
+    timer = setInterval(() => show(at + 1), period);
+  };
+  const stop = () => {
+    clearInterval(timer);
+    timer = 0;
+    root.classList.remove('is-rolling');      // last one landed on stays put
+  };
+
+  root.addEventListener('pointerenter', (e) => {
+    if (e.pointerType !== 'touch') start();
+  });
+  root.addEventListener('pointerleave', stop);
+
+  /* No hover on a touch screen, so a tap spins it and lets it settle. */
+  root.addEventListener('click', () => {
+    if (timer) { stop(); return; }
+    start();
+    setTimeout(stop, 1300);
+  });
+
+  /* Keyboard: the figure is focusable, so give it the same deal as hover. */
+  root.addEventListener('focus', start);
+  root.addEventListener('blur', stop);
+  root.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(at + 1); }
+  });
+
+  /* Land on a different flower each visit rather than always the dahlia. */
+  show(Math.floor(Math.random() * imgs.length));
+
+  return { start, stop, show };
+}
+
 /* ── text marquee ─────────────────────────────────────────────────────── */
 export function initMarquee({ text, symbol = '●', copies = 8, speed = 150 }) {
   const root = document.querySelector('.marquee');

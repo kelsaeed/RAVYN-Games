@@ -3,7 +3,7 @@
    ========================================================================== */
 
 import { createLogo3D } from './logo3d.js';
-import { initHero, initPanel, initMarquee, initSkim, initWatch, initWordmark } from './effects.js';
+import { initHero, initPanel, initMarquee, initSkim, initWatch, initWordmark, initRaven } from './effects.js';
 
 const { gsap, ScrollTrigger, Lenis } = window;
 gsap.registerPlugin(ScrollTrigger);
@@ -26,8 +26,17 @@ if (!still) {
 const WORKS = Array.from({ length: 14 }, (_, i) =>
   `./assets/works/work${String(i + 1).padStart(2, '0')}.png`);
 
+/* Ordered so no two neighbours share a hue - the roll should read as a
+   flicker of colour, not a slow fade through the reds.
+   black-rose and black-cosmos are cut and sitting in assets/flowers too, but
+   they are left out: against --bg they are a silhouette of nothing. */
+const FLOWERS = ['red-dahlia', 'blue-anemone', 'yellow-gerbera', 'magenta-hibiscus',
+                 'white-poppy', 'orange-lily', 'pink-rose', 'orange-gerbera', 'red-rose']
+                .map((n) => `./assets/flowers/${n}.webp`);
+
 initHero();
 initPanel();
+window.__raven = initRaven({ flowers: FLOWERS });
 initMarquee({ text: 'RAVYN Games', symbol: '●', copies: 8, speed: 150 });
 window.__skim = initSkim({ images: WORKS });
 initWatch();
