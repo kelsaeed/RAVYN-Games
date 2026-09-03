@@ -1,0 +1,15 @@
+# dependencies (none yet, but the dev server is node)
+node_modules/
+
+# logs
+*.log
+npm-debug.log*
+
+# editors
+.vscode/
+.idea/
+
+# os junk
+.DS_Store
+Thumbs.db
+desktop.ini
