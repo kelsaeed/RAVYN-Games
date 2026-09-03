@@ -54,9 +54,9 @@ Two things to know before moving anything:
 left out of the rotation in `main.js` — against `--bg` they are a silhouette of
 nothing. The flower list there is ordered so no two neighbours share a hue.
 
-The source images are stock photos of unknown licence; `20a62cf8….jpg` is a
-watermarked Vecteezy comp and is deliberately not used. Clear the rights, or
-swap in owned photography, before this goes anywhere public.
+The source images are stock photos of unknown licence. Clear the rights, or swap
+in owned photography, before this goes anywhere public. (A watermarked Vecteezy
+comp was among them and has been deleted.)
 
 ## Colour
 

@@ -196,16 +196,29 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
    (97, 329) in a 1024x1536 frame. The bird is sized by HEIGHT with its
    aspect ratio locked, never letterboxed, because those two percentages
    only land on the twig while the box matches the image exactly.        */
-.studio__side { min-width: 0; }
+/* Section 1 drops the shared two-column grid. The bird wants the full height
+   of the screen, and a grid cell cannot give it that without dragging the copy
+   down with it, so the back becomes a plain stage and its three layers are
+   placed on it: word behind, bird over that, copy off to the right. */
+.reveal__back { display: block; padding-top: 0; }
+.studio {
+  position: relative;
+  height: 100%; width: 100%;
+  max-width: 1600px; margin-inline: auto;
+  padding-inline: var(--pad);
+}
+
 .raven {
   --tip-x: 9.47%;
   --tip-y: 21.42%;
-  --bloom: 21%;
-  position: relative;
-  margin: clamp(14px, 2.4vh, 30px) 0 0;
-  height: min(58vh, 620px);
+  --bloom: 28%;
+  /* anchored to the floor, so it grows upward and never crops at the feet */
+  position: absolute;
+  left: var(--pad); bottom: 0;
+  z-index: 1;
+  height: min(88vh, 1000px);
   aspect-ratio: 1024 / 1536;
-  max-width: 100%;
+  max-width: calc(100% - var(--pad) * 2);
   cursor: pointer;
 }
 .raven__bird {
@@ -243,62 +256,150 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
 .raven.is-rolling .raven__bloom img.is-on { transition: none; }
 
 /* ── the nudge ────────────────────────────────────────────────────────
-   Sits under the bloom pointing up at it, and retires for good the first
-   time the raven is actually hovered. */
+   One word and a hairline dropping toward the bloom. It sits in the clear
+   air above and left of the flower, where there is no bird behind it, so it
+   needs no plate, no border and no arrow to stay readable. Retires for good
+   the first time the raven is actually used. */
 .raven__hint {
   position: absolute;
-  left: calc(var(--tip-x) + 5%); top: calc(var(--tip-y) + 13%);
-  display: flex; align-items: center; gap: 7px;
-  /* it has to cross the bird's chest to sit near the bloom, and orange on
-     blue-black feathers is unreadable, so it carries its own ground */
-  padding: 5px 11px 5px 7px;
-  border-radius: 999px;
-  background: rgba(10, 12, 18, .74);
-  border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
-  backdrop-filter: blur(6px);
+  left: var(--tip-x); top: calc(var(--tip-y) - 12%);
+  transform: translate(-50%, -100%);
+  display: flex; flex-direction: column; align-items: center; gap: 9px;
   color: var(--accent);
+  font-family: var(--mono);
+  font-size: clamp(9px, .72vw, 11px);
+  letter-spacing: .22em; text-transform: uppercase; white-space: nowrap;
   pointer-events: none;
+  animation: ravenBreathe 2.6s ease-in-out infinite;
   transition: opacity .45s ease, transform .45s ease;
 }
-/* curves up and to the left, which is where the bloom is from here */
-.raven__arrow {
-  width: clamp(26px, 2.6vw, 40px); flex: none;
-  fill: none; stroke: currentColor; stroke-width: 3.5;
-  stroke-linecap: round; stroke-linejoin: round;
-  opacity: .9;
+.raven__hintLine {
+  width: 1px; height: clamp(18px, 2.4vh, 30px);
+  background: linear-gradient(to bottom, currentColor, transparent);
 }
-.raven__hintText {
-  font-family: var(--mono); font-size: clamp(10px, .78vw, 12px);
-  letter-spacing: .12em; text-transform: uppercase; white-space: nowrap;
-  display: flex; align-items: center; gap: 7px;
+@keyframes ravenBreathe {
+  0%, 100% { opacity: .95; }
+  50%      { opacity: .38; }
 }
-.raven__hintText i {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: currentColor; flex: none;
-  animation: ravenPulse 1.9s ease-in-out infinite;
+.raven.is-used .raven__hint {
+  opacity: 0; transform: translate(-50%, calc(-100% - 6px)); animation: none;
 }
-@keyframes ravenPulse {
-  0%, 100% { opacity: 1;  transform: scale(1); }
-  50%      { opacity: .3; transform: scale(.6); }
-}
-.raven.is-used .raven__hint { opacity: 0; transform: translateY(6px); }
 
 /* "hover" is a lie on a touch screen, where the tap handler runs instead */
 .raven__verb--tap { display: none; }
 @media (hover: none) {
   .raven__verb--hover { display: none; }
-  .raven__verb--tap { display: inline; }
+  .raven__verb--tap { display: block; }
+}
+
+/* ── the word behind the bird ─────────────────────────────────────────
+   Deliberately low contrast: it is a ground, not a heading. The bird is on
+   z-index 1 so the word runs behind its body and out the other side. */
+.studio__word {
+  position: absolute;
+  left: var(--pad); bottom: clamp(18px, 5vh, 60px);
+  z-index: 0; margin: 0;
+  font-family: var(--display);
+  font-size: clamp(54px, 10.5vw, 190px);
+  line-height: .82; font-weight: 700;
+  letter-spacing: -.04em; text-transform: uppercase;
+  color: rgba(238, 241, 245, .085);
+  white-space: nowrap; user-select: none;
+}
+
+/* ── the copy, off to the right ───────────────────────────────────────
+   top matches the padding that .reveal__panel still carries, and .idx keeps
+   the .55em the shared grid used to give it, so "1 /" and the panel's "2 /"
+   still sit on exactly the same line as the panel slides across. */
+.studio__words {
+  position: absolute;
+  right: var(--pad); top: clamp(92px, 23vh, 230px);
+  z-index: 2;
+  width: min(40%, 520px);
+}
+.studio__words .idx { padding-top: .55em; margin: 0 0 clamp(14px, 2.6vh, 30px); }
+.studio__words h2 { font-size: clamp(26px, 2.7vw, 46px); }
+.studio__words .lead {
+  font-size: clamp(13px, .98vw, 16px);
+  max-width: 40ch; margin-top: clamp(10px, 1.6vh, 18px);
+}
+.studio__swipe {
+  margin-top: clamp(20px, 4vh, 46px);
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--mono); font-size: clamp(9px, .72vw, 11px);
+  letter-spacing: .18em; text-transform: uppercase; color: var(--muted);
+}
+/* a rule that slides right, the same direction the panel arrives from */
+.studio__swipe i {
+  width: clamp(26px, 3vw, 44px); height: 1px; flex: none;
+  background: linear-gradient(to right, transparent, var(--muted), transparent);
+  animation: swipeHint 2.4s ease-in-out infinite;
+}
+@keyframes swipeHint {
+  0%, 100% { transform: translateX(-5px); opacity: .35; }
+  50%      { transform: translateX(5px);  opacity: 1; }
 }
 
 .raven:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: 4px; }
 .raven:focus:not(:focus-visible) { outline: none; }
 
+/* Narrow: the three layers stop overlapping and stack. The stage is still a
+   pinned 100svh box here, so the bird is sized to leave the copy room rather
+   than being clipped by the screen it rides on. */
 @media (max-width: 900px) {
-  .raven { height: min(52vh, 480px); margin-inline: auto; }
+  .studio {
+    display: flex; flex-direction: column; align-items: center;
+    gap: clamp(12px, 2.2vh, 24px);
+    padding-top: clamp(84px, 14vh, 130px);
+  }
+  .studio__word {
+    position: static; align-self: flex-start;
+    font-size: clamp(30px, 9.5vw, 64px);
+    color: rgba(238, 241, 245, .12);
+  }
+  /* relative, never static: the bloom and the nudge are positioned off this
+     box, so dropping it out of the positioning chain throws them onto .studio */
+  .raven { position: relative; height: min(42vh, 400px); margin-inline: auto; }
+  .studio__words { position: static; width: 100%; }
+  .studio__words .idx { padding-top: 0; }
+  .studio__words h2 { font-size: clamp(24px, 7vw, 38px); }
 }
+
+/* A phone on its side is wide and very short, so stacking runs the copy off
+   the bottom of a pinned 100svh box that clips. Side by side again - there is
+   width to spare here, it is only height that ran out. */
+@media (max-width: 900px) and (max-height: 620px) {
+  .studio {
+    flex-direction: row; align-items: center;
+    gap: clamp(16px, 3vw, 34px);
+    padding-top: clamp(44px, 8vh, 68px);
+  }
+  .studio__word {
+    position: absolute; align-self: auto;
+    left: var(--pad); bottom: clamp(6px, 2vh, 16px);
+    font-size: clamp(28px, 7.5vw, 60px);
+  }
+  .raven { height: min(72vh, 260px); flex: none; margin-inline: 0; }
+  .studio__words { flex: 1 1 auto; }
+  .studio__words h2 { font-size: clamp(19px, 3.4vw, 28px); }
+  .studio__words .lead { font-size: 12px; max-width: 34ch; }
+  .studio__swipe { margin-top: clamp(10px, 2vh, 20px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .raven__hintText i { animation: none; }
+  .raven__hint { animation: none; }
+  .studio__swipe i { animation: none; }
   .raven__bloom img.is-on { transition: none; }
+  /* the back is static in this mode, so nothing may be positioned off it */
+  .studio {
+    height: auto;
+    display: flex; flex-direction: column; align-items: flex-start;
+    gap: clamp(16px, 3vh, 32px);
+  }
+  .studio__word { position: static; }
+  .raven { position: relative; height: min(70vh, 720px); }
+  .studio__words { position: static; width: 100%; max-width: 620px; }
+  .studio__words .idx { padding-top: 0; }
 }
 
 /* ── Effect 6 — hold-to-skim gallery ──────────────────────────────────── */

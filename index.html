@@ -69,38 +69,34 @@
   <section class="reveal" id="studio">
     <div class="reveal__screen">
       <div class="reveal__back">
-        <div class="wrap grid">
-          <!-- Index and raven share the narrow column, so "1 /" stays on the
-               same line as "2 /" on the panel that slides over this. -->
-          <div class="studio__side">
+        <div class="studio">
+          <!-- Sits behind the bird and gets half eaten by it. Decorative: the
+               real heading is the h2, so this is hidden from screen readers. -->
+          <p class="studio__word" aria-hidden="true">What we do</p>
+
+          <!-- The bloom is a separate layer pinned to the left end of the
+               twig. Every flower is in the DOM and decoded up front; the
+               roll only flips a class, so it never waits on a network hop. -->
+          <figure class="raven" id="raven" tabindex="0"
+                  aria-label="Raven holding a twig. Hover, tap or focus it to change the flower.">
+            <img class="raven__bird" src="./assets/standing-raven.webp"
+                 width="1024" height="1536" alt="A raven holding a twig in its beak.">
+            <span class="raven__bloom" id="ravenBloom"></span>
+            <figcaption class="raven__hint" id="ravenHint">
+              <span class="raven__verb raven__verb--hover">hover</span>
+              <span class="raven__verb raven__verb--tap">tap</span>
+              <span class="raven__hintLine" aria-hidden="true"></span>
+            </figcaption>
+          </figure>
+
+          <div class="studio__words">
             <p class="mono idx">1 <b class="muted">/ How we work</b></p>
-
-            <!-- The bloom is a separate layer pinned to the left end of the
-                 twig. Every flower is in the DOM and decoded up front; the
-                 roll only flips a class, so it never waits on a network hop. -->
-            <figure class="raven" id="raven" tabindex="0"
-                    aria-label="Raven holding a twig. Hover, tap or focus it to change the flower.">
-              <img class="raven__bird" src="./assets/standing-raven.webp"
-                   width="1024" height="1536" alt="A raven holding a twig in its beak.">
-              <span class="raven__bloom" id="ravenBloom"></span>
-              <figcaption class="raven__hint" id="ravenHint">
-                <svg class="raven__arrow" viewBox="0 0 62 46" aria-hidden="true">
-                  <path d="M58 42C44 40 20 33 11 14" />
-                  <path d="M5 4l4 12 12-3" />
-                </svg>
-                <span class="raven__hintText"><i></i><span
-                  class="raven__verb raven__verb--hover">hover</span><span
-                  class="raven__verb raven__verb--tap">tap</span>&nbsp;the raven</span>
-              </figcaption>
-            </figure>
-          </div>
-
-          <div>
             <h2>Small team.<br>Whole game.</h2>
             <p class="lead">
               No handoffs, no telephone. The people who design it are the people
               who build it and the people who answer for it.
             </p>
+            <p class="studio__swipe"><i aria-hidden="true"></i>Swipe to see more</p>
           </div>
         </div>
       </div>
