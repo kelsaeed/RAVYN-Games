@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy — RAVYN Games</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="./styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0c12'/%3E%3Cpath d='M7 22l9-11 3 3 4-6 2 3-3 4 4 1-6 2-3 5z' fill='%23db5227'/%3E%3C/svg%3E">
+
+<style>
+  body { background: var(--flood); color: #fff; }
+
+  .pv-nav {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px var(--pad);
+    background: var(--flood); border-bottom: 1px solid rgba(255,255,255,.25);
+  }
+  .pv-nav a:hover { color: var(--accent); }
+
+  .pv-flag {
+    background: var(--accent); color: #140702;
+    padding: 14px var(--pad); font-family: var(--mono);
+    font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+  }
+
+  .pv-hero { padding: clamp(50px, 12vh, 130px) var(--pad) clamp(30px, 6vh, 70px); }
+  .pv-hero h1 {
+    font-size: clamp(64px, 19vw, 340px); line-height: .78;
+    letter-spacing: -.06em; margin: 0; font-weight: 700;
+  }
+  .pv-hero h1 span { color: var(--accent); }
+  .pv-hero p { max-width: 42ch; font-size: clamp(17px, 1.7vw, 24px); color: rgba(255,255,255,.78); }
+
+  /* the chaos: a wall of leaning cards */
+  .pv-wall {
+    padding: clamp(20px, 5vh, 60px) var(--pad) clamp(60px, 12vh, 150px);
+    display: grid; gap: clamp(16px, 2.4vw, 34px);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    align-items: start;
+  }
+  .pv-card {
+    background: var(--bg); color: var(--text);
+    border-radius: 16px; padding: clamp(20px, 2.4vw, 34px);
+    transform: rotate(var(--r, 0deg));
+    transition: transform .35s cubic-bezier(.2,.8,.2,1);
+  }
+  .pv-card:hover { transform: rotate(0deg) translateY(-6px); }
+  .pv-card:nth-child(4n+1) { --r: -1.6deg; }
+  .pv-card:nth-child(4n+2) { --r: 1.2deg; }
+  .pv-card:nth-child(4n+3) { --r: .9deg; }
+  .pv-card:nth-child(4n+4) { --r: -1.1deg; }
+  .pv-card--loud { background: var(--accent); color: #140702; }
+  .pv-card--loud .pv-num { color: rgba(20,7,2,.5); }
+
+  .pv-num {
+    font-family: var(--mono); font-size: clamp(40px, 5vw, 72px);
+    line-height: 1; color: var(--accent); display: block; margin-bottom: .25em;
+  }
+  .pv-card h2 { font-size: clamp(21px, 2vw, 30px); margin: 0 0 .5em; line-height: 1.1; letter-spacing: -.02em; }
+  .pv-card p, .pv-card li { color: inherit; opacity: .84; font-size: 15.5px; margin: 0 0 .8em; }
+  .pv-card ul { margin: 0; padding-left: 1.1em; }
+  .pv-card strong { opacity: 1; }
+
+  .pv-shout {
+    grid-column: 1 / -1;
+    font-size: clamp(30px, 6vw, 92px); line-height: .95; font-weight: 700;
+    letter-spacing: -.04em; text-align: center;
+    padding: clamp(24px, 5vh, 60px) 0; margin: 0;
+  }
+  .pv-shout em { font-style: normal; color: var(--accent); }
+
+  .pv-strike { text-decoration: line-through; opacity: .45; }
+
+  .pv-foot {
+    padding: clamp(30px, 6vh, 60px) var(--pad);
+    border-top: 1px solid rgba(255,255,255,.25);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    color: rgba(255,255,255,.65);
+  }
+  .pv-foot a:hover { color: var(--accent); }
+</style>
+</head>
+
+<body>
+
+<div class="pv-flag">
+  Placeholder document · written for a site that does not exist yet · must be replaced
+  by a real, lawyer-read policy before launch
+</div>
+
+<header class="pv-nav mono">
+  <a href="./index.html">&#8592; RAVYN Games</a>
+  <span>Privacy</span>
+</header>
+
+<section class="pv-hero">
+  <h1>PRIV<span>A</span>CY</h1>
+  <p>
+    A raven will take anything shiny that is not nailed down. Your data is nailed down.
+    Here is the honest, slightly unhinged version of what that means.
+  </p>
+</section>
+
+<main class="pv-wall">
+
+  <article class="pv-card">
+    <span class="pv-num">1</span>
+    <h2>What we collect right now</h2>
+    <p><strong>Nothing.</strong> Not a byte.</p>
+    <p>
+      This site is a prototype. There is no analytics script, no tag manager, no pixel,
+      no cookie banner — because there is no cookie to warn you about. The page loads,
+      it shows you a metal bird, it forgets you completely.
+    </p>
+  </article>
+
+  <article class="pv-card">
+    <span class="pv-num">2</span>
+    <h2>What your browser does anyway</h2>
+    <p>Two things happen that we do not control and should still tell you about:</p>
+    <ul>
+      <li>Fetching three.js, GSAP and Lenis from <strong>cdnjs</strong> and <strong>jsDelivr</strong>. Those CDNs see the request, like every CDN does.</li>
+      <li>Whoever ends up hosting this will keep ordinary server logs — IP, timestamp, which file.</li>
+    </ul>
+    <p>That is the entire surface. It is smaller than most.</p>
+  </article>
+
+  <article class="pv-card pv-card--loud">
+    <span class="pv-num">3</span>
+    <h2>If you email us</h2>
+    <p>
+      Then we have your email, obviously. We keep it in a normal inbox, we reply to it,
+      and we do not add you to a list you did not ask for. There is no list. We have not
+      built the list. Building the list sounds exhausting.
+    </p>
+  </article>
+
+  <p class="pv-shout">
+    We are not going to<br><em>sell</em> anything about you.<br>
+    There is <em>nothing to sell</em>.
+  </p>
+
+  <article class="pv-card">
+    <span class="pv-num">4</span>
+    <h2>Things we will never do</h2>
+    <ul>
+      <li class="pv-strike">Sell your data to advertisers</li>
+      <li class="pv-strike">Fingerprint your browser</li>
+      <li class="pv-strike">Follow you around the internet</li>
+      <li class="pv-strike">Hide a tracker inside a cursor</li>
+      <li>Pretend the list above is a legal guarantee written by a lawyer. It is not. See the flag at the top.</li>
+    </ul>
+  </article>
+
+  <article class="pv-card">
+    <span class="pv-num">5</span>
+    <h2>Your rights</h2>
+    <p>
+      Under GDPR and friends you can ask what we hold, ask for a copy, ask us to correct it,
+      and ask us to delete it. For this site the honest answer to the first question is
+      <strong>"an email, if you sent us one"</strong>, and the answer to the last is
+      <strong>"done"</strong>.
+    </p>
+    <p>Ask at <a class="accent" href="mailto:hello@ravyngames.com">hello@ravyngames.com</a>.</p>
+  </article>
+
+  <article class="pv-card">
+    <span class="pv-num">6</span>
+    <h2>When this becomes a real game studio site</h2>
+    <p>
+      It will grow: a launcher, a newsletter, crash reports, maybe a store. Every one of
+      those collects something real, and every one of them needs a clause here written by
+      someone qualified.
+    </p>
+    <p>
+      When that day comes this page gets rewritten properly. It can stay this loud. It
+      cannot stay this vague.
+    </p>
+  </article>
+
+  <article class="pv-card">
+    <span class="pv-num">7</span>
+    <h2>Changes</h2>
+    <p>
+      If we change this, the date below changes with it. We will not quietly rewrite
+      history and hope you were not looking. Ravens notice that sort of thing.
+    </p>
+  </article>
+
+</main>
+
+<footer class="pv-foot mono">
+  <span>Last updated · 3 September 2026 · placeholder</span>
+  <a href="./index.html">Back to the nest &#8599;</a>
+</footer>
+
+</body>
+</html>
