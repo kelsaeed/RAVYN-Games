@@ -33,6 +33,38 @@ assets/works/       14 generated placeholders
 docs/scroll-effects.md the technique reference every effect is built from
 ```
 
+## Section names
+
+Sections are named by one big word each, not by a numbered index. The
+interrogative carries the accent, the rest is a pale grey ground:
+
+| section | word |
+|---|---|
+| `#studio` back | **What** we do |
+| `.reveal__panel` | **Why** choose us |
+| `#work` | **How** do we play |
+| `#team` | **Who** are we |
+| `#contact` | **Where** to find us |
+
+Three things about `.bigword`:
+
+- **It is a ground, not a heading.** `aria-hidden`, `pointer-events: none`, and
+  the real heading is still the `h2` above it. The accent half is `--accent` at
+  70% rather than flat: at 176px a solid `#f03902` stops being a ground and
+  starts competing with the copy it sits under.
+- **`right: 0` puts the last letter on the screen edge**, not on the 1600 wrap.
+  No compensation needed — `letter-spacing` is negative, so the text box already
+  ends short of the final glyph's advance by about its side bearing.
+- **A placed word owns the floor of its section.** `.section--floor` and the
+  padding on `.watch__screen` exist to keep the content above it off — without
+  them the contact button and the team captions land on the letterforms. The
+  watch needs padding at the *top* as well, because that screen centres its
+  contents and bottom padding alone lifts them into the fixed nav.
+
+`#work` is the exception: its gallery runs to the bottom of the section, so
+there the word is `.bigword--flow` — in normal flow between the paragraph and
+the gallery, still hard right against the screen.
+
 ## The mark
 
 `assets/krow-mark.svg` is traced from `colored raven logo.svg`. That file is a

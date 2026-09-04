@@ -83,7 +83,7 @@
         <div class="studio">
           <!-- Sits behind the bird and gets half eaten by it. Decorative: the
                real heading is the h2, so this is hidden from screen readers. -->
-          <p class="studio__word" aria-hidden="true">What we do</p>
+          <p class="bigword" aria-hidden="true"><b>What</b> we do</p>
 
           <!-- The bloom is a separate layer pinned to the left end of the
                twig. Every flower is in the DOM and decoded up front; the
@@ -101,7 +101,6 @@
           </figure>
 
           <div class="studio__words">
-            <p class="mono idx">1 <b class="muted">/ How we work</b></p>
             <h2>Small team.<br>Whole game.</h2>
             <p class="lead">
               No handoffs, no telephone. The people who design it are the people
@@ -112,8 +111,8 @@
         </div>
       </div>
       <div class="reveal__panel">
-        <div class="wrap grid">
-          <p class="mono idx">2 <b>/ What you get</b></p>
+        <p class="bigword" aria-hidden="true"><b>Why</b> choose us</p>
+        <div class="wrap">
           <ul class="list">
             <li><b>Direction</b><span>Art, systems and tone decided together, early.</span></li>
             <li><b>Production</b><span>Vertical slice first. Everything after that is proof.</span></li>
@@ -126,13 +125,16 @@
 
   <!-- ── Effect 6 — hold-to-skim gallery ── -->
   <section class="section skim-section" id="work">
-    <div class="wrap grid">
-      <p class="mono idx">3 <b class="muted">/ Work</b></p>
+    <div class="wrap">
       <p class="lead">
         Fourteen slots, filled with placeholders until the real thing lands.
         Hold the strip down and it runs.
       </p>
     </div>
+
+    <!-- in flow, not absolute: the gallery runs to the bottom of this section,
+         so a placed word would land on top of it -->
+    <p class="bigword bigword--flow" aria-hidden="true"><b>How</b> do we play</p>
 
     <div class="skim" id="skim">
       <div class="skim__scale">
@@ -148,8 +150,8 @@
   <!-- ── the watch — look away, then look at you ── -->
   <section class="watch" id="team">
     <div class="watch__screen">
-      <div class="wrap grid">
-        <p class="mono idx">4 <b class="muted">/ The team</b></p>
+      <p class="bigword" aria-hidden="true"><b>Who</b> are we</p>
+      <div class="wrap">
         <p class="lead">
           Keep scrolling and they turn round. Empty frames for now —
           real portraits drop straight in.
@@ -177,9 +179,9 @@
   </section>
 
   <!-- ── outro ── -->
-  <section class="section" id="contact">
-    <div class="wrap grid">
-      <p class="mono idx">5 <b class="muted">/ Contact</b></p>
+  <section class="section section--floor" id="contact">
+    <p class="bigword" aria-hidden="true"><b>Where</b> to find us</p>
+    <div class="wrap">
       <div>
         <h2 class="big">Bring us<br>something <em class="accent">odd</em>.</h2>
         <a class="btn" href="mailto:hello@ravyngames.com">

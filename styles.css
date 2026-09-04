@@ -330,19 +330,59 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
 /* ── the word behind the bird ─────────────────────────────────────────
    Deliberately low contrast: it is a ground, not a heading. The bird is on
    z-index 1 so the word runs behind its body and out the other side. */
-.studio__word {
+/* Every section is named by one of these instead of a numbered index. The
+   interrogative carries the accent, the rest is a pale grey ground. Both sit
+   well back: this is the floor of the section, not a heading, and the real
+   heading is still the h2 above it. */
+.bigword {
   position: absolute;
-  /* right:0 lands the O on the edge on its own. letter-spacing is negative, so
-     the text box already ends .04em short of the last glyph's advance, which is
-     about the O's right side bearing - pulling it further right only clips it. */
+  /* right:0 lands the last letter on the edge on its own. letter-spacing is
+     negative, so the text box already ends .04em short of the final glyph's
+     advance, about its right side bearing - pulling it further only clips it. */
   right: 0; left: auto; bottom: clamp(18px, 5vh, 60px);
   z-index: 0; margin: 0;
   font-family: var(--display);
-  font-size: clamp(54px, 10.5vw, 190px);
+  font-size: clamp(48px, 9.6vw, 176px);
   line-height: .82; font-weight: 700;
   letter-spacing: -.04em; text-transform: uppercase;
-  color: rgba(238, 241, 245, .085);
+  color: rgba(238, 241, 245, .17);
   white-space: nowrap; text-align: right; user-select: none;
+  pointer-events: none;
+}
+.bigword b {
+  font-weight: inherit;
+  /* not flat --accent: at 176px a solid #f03902 stops being a ground and starts
+     competing with the copy. This still reads unmistakably as the accent. */
+  color: color-mix(in srgb, var(--accent) 70%, transparent);
+}
+/* On the flood panel the ground is blue, so the grey half needs more lift */
+.reveal__panel .bigword { color: rgba(255, 255, 255, .16); }
+
+/* Sections whose content runs to the bottom edge cannot host an absolutely
+   placed word without it landing on top of them. There the word sits in flow
+   instead, still hard right against the screen. */
+.bigword--flow {
+  position: static; display: block;
+  margin: clamp(10px, 2vh, 26px) 0 clamp(-18px, -2vh, -6px);
+  padding-inline: 0;
+}
+
+/* A placed bigword owns the floor of its section, so whatever is above it has
+   to be told to keep off — otherwise the team captions and the contact button
+   land right on top of it. Not needed where the word is in flow, and not on
+   .studio, where sitting behind the bird is the whole idea. */
+.section--floor { padding-bottom: clamp(170px, 25vh, 330px); }
+/* The screen centres its contents, so bottom padding alone lifts them into the
+   fixed nav. The top figure is what keeps them out of it. */
+.watch__screen {
+  padding-top: clamp(74px, 11vh, 130px);
+  padding-bottom: clamp(110px, 17vh, 200px);
+}
+@media (max-width: 900px) {
+  /* four cards in a 2x2 leave no room to give the word a floor as well, so on a
+     phone it just sits behind them - which is what it does under the bird too */
+  .watch__screen { padding-top: clamp(64px, 9vh, 92px); padding-bottom: clamp(30px, 5vh, 70px); }
+  .section--floor { padding-bottom: clamp(110px, 18vh, 200px); }
 }
 
 /* ── the copy, off to the right ───────────────────────────────────────
@@ -390,10 +430,13 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
     gap: clamp(12px, 2.2vh, 24px);
     padding-top: clamp(84px, 14vh, 130px);
   }
-  .studio__word {
+  .bigword {
+    font-size: clamp(26px, 8.6vw, 56px);
+    color: rgba(238, 241, 245, .2);
+    bottom: clamp(2px, 1vh, 10px);       /* down off the captions it sits behind */
+  }
+  .studio .bigword {
     position: static; align-self: flex-start; text-align: left;
-    font-size: clamp(30px, 9.5vw, 64px);
-    color: rgba(238, 241, 245, .12);
   }
   /* relative, never static: the bloom and the nudge are positioned off this
      box, so dropping it out of the positioning chain throws them onto .studio */
@@ -412,10 +455,10 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
     gap: clamp(16px, 3vw, 34px);
     padding-top: clamp(44px, 8vh, 68px);
   }
-  .studio__word {
+  .studio .bigword {
     position: absolute; align-self: auto; text-align: right;
     left: auto; right: 0; bottom: clamp(6px, 2vh, 16px);
-    font-size: clamp(28px, 7.5vw, 60px);
+    font-size: clamp(26px, 7vw, 56px);
   }
   .raven { height: min(72vh, 260px); flex: none; margin-inline: 0; }
   .studio__words { flex: 1 1 auto; }
@@ -434,7 +477,7 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
     display: flex; flex-direction: column; align-items: flex-start;
     gap: clamp(16px, 3vh, 32px);
   }
-  .studio__word { position: static; }
+  .studio .bigword { position: static; }
   .raven { position: relative; height: min(70vh, 720px); }
   .studio__words { position: static; width: 100%; max-width: 620px; }
   .studio__words .idx { padding-top: 0; }
