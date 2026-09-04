@@ -1,7 +1,12 @@
 /* ==========================================================================
-   Effect 5b — the extruded chrome crow that docks into the nav.
+   Effect 5b — the extruded mark that docks into the nav.
    See docs/scroll-effects.md. Framework-agnostic: this module only needs a
    DOM element, plus gsap + ScrollTrigger on window.
+
+   The mark is assets/krow-mark.svg: one evenodd path, one outer contour and
+   seventeen holes. Extruded, those holes go clean through the slab, so the
+   eye, the slots down the wing and the gap between the legs are all real
+   openings you can see daylight through as it turns.
    ========================================================================== */
 
 import * as THREE from 'three';
@@ -10,23 +15,21 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const { gsap, ScrollTrigger } = window;
 
-/* extrusion depths, in SVG user units (the mark's viewBox is 120 wide) */
-const BODY_DEPTH  = 34;
-const WING_DEPTH  = 30;
-const FACET_DEPTH = 6;
+const DEPTH = 22;          // extrusion, in SVG user units (the mark is 120 wide)
 
-const REST_YAW  = -0.34;   // resting three-quarter view
-const YAW_DRIFT = 0.09;
-const YAW_KICK  = 2e-5;
-const YAW_CLAMP = 0.08;
+const SPIN_IDLE = 0.30;    // rad/s — the slow turn it keeps to on its own
+const DRAG_RAD  = 0.011;   // rad per pixel dragged
+const SPIN_MAX  = 16;      // rad/s — a hard throw should not become a blur
+const SPIN_DECAY = 0.955;  // per 60fps frame, how a throw bleeds off
+const CLICK_SLOP = 6;      // px of travel still counted as a click, not a drag
+const SCROLL_KICK = 6e-4;  // scrolling hard nudges the spin along too
 
-const LIFT      = 0.22;    // rad, ~13° — past this the folded joint reads as broken
-const DOCK_SCALE = 0.23;   // parked height should fill the nav strip without crowding the links
+const DOCK_SCALE = 0.23;   // parked height fills the nav strip without crowding
 
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* Extrude flips handedness, which inverts winding and therefore normals.
-   On a metalness .92 surface that is not subtle — reverse it explicitly. */
+   On a metalness .6 surface that is not subtle — reverse it explicitly. */
 function flipY(geom) {
   geom.scale(1, -1, 1);
   const idx = geom.getIndex();
@@ -70,35 +73,35 @@ export function createLogo3D({ root, src, dockOffset = 0 }) {
   renderer.setSize(w, h);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.15;
+  renderer.toneMappingExposure = 1.1;
   container.appendChild(renderer.domElement);
 
-  /* the chrome comes from the environment, not the lights */
   const pmrem = new THREE.PMREMGenerator(renderer);
   const envRT = pmrem.fromScene(new RoomEnvironment(), 0.04);
   scene.environment = envRT.texture;
 
-  const key  = new THREE.DirectionalLight(0xffffff, 2.6); key.position.set(3, 4, 8);
-  const fill = new THREE.DirectionalLight(0xa8d7ff, 1.2); fill.position.set(-4, -1, 6);
-  const rim  = new THREE.DirectionalLight(0xffffff, 1.0); rim.position.set(0, 2, -8);
-  scene.add(key, fill, rim, new THREE.AmbientLight(0xffffff, 0.8));
+  const key  = new THREE.DirectionalLight(0xffffff, 2.4); key.position.set(3, 4, 8);
+  const fill = new THREE.DirectionalLight(0xa8d7ff, 1.1); fill.position.set(-4, -1, 6);
+  const rim  = new THREE.DirectionalLight(0xffffff, 1.4); rim.position.set(0, 2, -8);
+  scene.add(key, fill, rim, new THREE.AmbientLight(0xffffff, 0.75));
 
   const shell = new THREE.Group();
   scene.add(shell);
 
-  const chrome = new THREE.MeshPhysicalMaterial({
-    color: 0xe7edf6, metalness: 0.92, roughness: 0.05,
-    clearcoat: 1, clearcoatRoughness: 0.08,
-    envMapIntensity: 1.7, side: THREE.DoubleSide,
+  /* Two materials, because ExtrudeGeometry groups the caps as index 0 and the
+     side walls as index 1. A darker wall is what makes the thickness legible
+     while it turns — one flat colour and it reads as a sticker, not a slab. */
+  const face = new THREE.MeshPhysicalMaterial({
+    color: 0xf03902, metalness: 0.45, roughness: 0.28,
+    clearcoat: 0.9, clearcoatRoughness: 0.18,
+    envMapIntensity: 1.25, side: THREE.DoubleSide,
   });
-  const groove = new THREE.MeshPhysicalMaterial({
-    color: 0x76828e,                     // palette steel
-    metalness: 0.95, roughness: 0.28,
-    clearcoat: 0.55, clearcoatRoughness: 0.3,
-    envMapIntensity: 1.2, side: THREE.DoubleSide,
+  const wall = new THREE.MeshPhysicalMaterial({
+    color: 0x8f1e00, metalness: 0.7, roughness: 0.36,
+    clearcoat: 0.5, clearcoatRoughness: 0.3,
+    envMapIntensity: 1.0, side: THREE.DoubleSide,
   });
 
-  let wingPivot = null;
   let restSize = new THREE.Vector3(1, 1, 1);
   let ready = false;
   let disposed = false;
@@ -107,58 +110,28 @@ export function createLogo3D({ root, src, dockOffset = 0 }) {
   new SVGLoader().load(src, (data) => {
     if (disposed) return;
 
-    const groupOf = (p) => p.userData?.node?.closest?.('g[id]')?.id ?? 'body';
-    const joints = {};
-    const buckets = { body: [], wing: [], facets: [] };
-
+    const geoms = [];
     for (const p of data.paths) {
-      const node = p.userData?.node;
-      const id = node?.getAttribute?.('id');
-      if (id && id.startsWith('pivot-')) {
-        joints[id] = { x: +node.getAttribute('cx'), y: +node.getAttribute('cy') };
-        continue;                                  // markers are not geometry
-      }
-      const g = groupOf(p);
-      const depth = g === 'facets' ? FACET_DEPTH : g === 'wing' ? WING_DEPTH : BODY_DEPTH;
-      const opts = g === 'facets'
-        ? { depth, bevelEnabled: false, steps: 1, curveSegments: 8 }
-        : { depth, bevelEnabled: true, bevelSegments: 2, steps: 1,
-            bevelSize: 0.6, bevelThickness: 1.1, curveSegments: 12 };
+      /* createShapes reads the path's fill-rule and nests the subpaths, so the
+         seventeen cut-outs arrive as shape.holes and get extruded as voids. */
       for (const shape of SVGLoader.createShapes(p)) {
-        (buckets[g] || buckets.body).push(new THREE.ExtrudeGeometry(shape, opts));
+        geoms.push(new THREE.ExtrudeGeometry(shape, {
+          depth: DEPTH, bevelEnabled: true, bevelSegments: 2, steps: 1,
+          bevelSize: 0.5, bevelThickness: 0.9, curveSegments: 8,
+        }));
       }
     }
 
-    /* centre on the body+wing footprint only — facets must not shift it */
     const bb = new THREE.Box3();
-    for (const g of [...buckets.body, ...buckets.wing]) {
-      g.computeBoundingBox(); bb.union(g.boundingBox);
-    }
+    for (const g of geoms) { g.computeBoundingBox(); bb.union(g.boundingBox); }
     const cx = (bb.min.x + bb.max.x) / 2;
     const cy = (bb.min.y + bb.max.y) / 2;
     restSize.set(bb.max.x - bb.min.x, bb.max.y - bb.min.y, 1);
 
-    const place = (geom, zOff) => {
-      geom.translate(-cx, -cy, zOff);
-      flipY(geom);
-    };
-
-    for (const g of buckets.body)   { place(g, -BODY_DEPTH / 2);      shell.add(new THREE.Mesh(g, chrome)); }
-    for (const g of buckets.facets) { place(g, BODY_DEPTH / 2 - 2);   shell.add(new THREE.Mesh(g, groove)); }
-
-    if (buckets.wing.length) {
-      const j = joints['pivot-wing'];
-      // the pivot goes through the same transform as the geometry
-      const px = j ? j.x - cx : 0;
-      const py = j ? -(j.y - cy) : 0;
-      wingPivot = new THREE.Group();
-      wingPivot.position.set(px, py, 2);           // sit just proud of the body
-      for (const g of buckets.wing) {
-        place(g, -WING_DEPTH / 2);
-        g.translate(-px, -py, 0);                  // shoulder to the mesh origin
-        wingPivot.add(new THREE.Mesh(g, chrome));
-      }
-      shell.add(wingPivot);
+    for (const g of geoms) {
+      g.translate(-cx, -cy, -DEPTH / 2);   // centred on its own thickness, so it
+      flipY(g);                            // turns about the middle of the slab
+      shell.add(new THREE.Mesh(g, [face, wall]));
     }
 
     ready = true;
@@ -180,7 +153,7 @@ export function createLogo3D({ root, src, dockOffset = 0 }) {
   let progress = 0, docked = false;
 
   function measure() {
-    root.setAttribute('style', baseStyle);         // back to the CSS pose
+    root.setAttribute('style', baseStyle);
     const r = root.getBoundingClientRect();
     dockTop  = dockOffset;
     startTop = r.top + window.scrollY;
@@ -201,14 +174,59 @@ export function createLogo3D({ root, src, dockOffset = 0 }) {
       top: Math.max(dockTop, startTop - window.scrollY),
       left: (window.innerWidth - boxW) / 2,
       width: boxW, height: boxH,
-      x: 0, y: 0, xPercent: 0, yPercent: 0,        // clear the CSS centring transform
+      x: 0, y: 0, xPercent: 0, yPercent: 0,
       scale: gsap.utils.interpolate(1, DOCK_SCALE, progress),
       transformOrigin: '50% 0%',
       zIndex: docked ? 21 : 12,
-      pointerEvents: docked ? 'auto' : 'none',
-      cursor: docked ? 'pointer' : 'default',
+      /* always grabbable now, not only once parked — the turn is the point */
+      pointerEvents: 'auto',
+      cursor: dragging ? 'grabbing' : 'grab',
     });
   }
+
+  /* ── turning: idle drift, drag to steer, throw to spin ──────────────── */
+  let yaw = -0.34;          // opens on the resting three-quarter view
+  let spin = 0;             // rad/s on top of the idle drift
+  let dragging = false;
+  let lastX = 0, lastT = 0, travelled = 0, vpx = 0;
+
+  function onDown(e) {
+    if (still) return;
+    dragging = true;
+    lastX = e.clientX; lastT = e.timeStamp || performance.now();
+    travelled = 0; vpx = 0; spin = 0;
+    root.setPointerCapture?.(e.pointerId);
+    root.style.cursor = 'grabbing';
+  }
+
+  function onMove(e) {
+    if (!dragging) return;
+    const now = e.timeStamp || performance.now();
+    const dx = e.clientX - lastX;
+    const dt = now - lastT;
+    yaw += dx * DRAG_RAD;                 // the mark follows the finger exactly
+    travelled += Math.abs(dx);
+    /* keep the most recent pointer speed rather than an average: what you feel
+       on release is the flick at the end, not the whole gesture */
+    if (dt > 0) vpx = dx / dt;            // px per ms
+    lastX = e.clientX; lastT = now;
+  }
+
+  function onUp(e) {
+    if (!dragging) return;
+    dragging = false;
+    root.releasePointerCapture?.(e.pointerId);
+    root.style.cursor = 'grab';
+    /* a stale reading means the finger had already stopped before lifting */
+    const idle = (e.timeStamp || performance.now()) - lastT > 90;
+    spin = idle ? 0 : gsap.utils.clamp(-SPIN_MAX, SPIN_MAX, vpx * 1000 * DRAG_RAD);
+    if (travelled < CLICK_SLOP && docked) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  root.addEventListener('pointerdown', onDown);
+  root.addEventListener('pointermove', onMove);
+  root.addEventListener('pointerup', onUp);
+  root.addEventListener('pointercancel', onUp);
 
   measure();
   apply();
@@ -228,11 +246,9 @@ export function createLogo3D({ root, src, dockOffset = 0 }) {
     onUpdate: (self) => kick(self.getVelocity()),
   });
 
-  let target = 0, energy = 0, yawKick = 0, phase = 0;
   function kick(v) {
-    if (still) return;
-    yawKick = gsap.utils.clamp(-YAW_CLAMP, YAW_CLAMP, -v * YAW_KICK);
-    target = Math.max(target, gsap.utils.clamp(0, 1, Math.abs(v) / 1800));
+    if (still || dragging) return;
+    spin = gsap.utils.clamp(-SPIN_MAX, SPIN_MAX, spin - v * SCROLL_KICK);
   }
 
   /* ── one loop, shared with Lenis ────────────────────────────────────── */
@@ -240,20 +256,14 @@ export function createLogo3D({ root, src, dockOffset = 0 }) {
     if (!ready) return;
     const dr = gsap.ticker.deltaRatio(60);
 
-    if (!still) {
-      // lifts hardest mid-flight, calm at rest and calm once docked
-      const flight = Math.sin(Math.PI * progress);
-      energy += (Math.max(flight, target) - energy) * (1 - Math.pow(1 - 0.06, dr));
-      target *= Math.pow(0.92, dr);
-      yawKick *= Math.pow(0.9, dr);
-      phase += 0.012 * dr;
+    if (!still && !dragging) {
+      yaw += (SPIN_IDLE + spin) * (dr / 60);
+      spin *= Math.pow(SPIN_DECAY, dr);
     }
-
-    if (wingPivot) {
-      wingPivot.rotation.z = -LIFT * energy;       // -Z opens the folded wing upward
-      wingPivot.rotation.x = LIFT * energy * 0.4;  // tip swings toward the camera
-    }
-    shell.rotation.y = REST_YAW + Math.sin(phase) * YAW_DRIFT + yawKick;
+    shell.rotation.y = yaw;
+    /* a fixed sliver of tilt. Dead level, the quarter turn is a plain rectangle
+       and the slab reads as a bar; off-axis you keep a little of the face. */
+    shell.rotation.x = 0.09;
 
     renderer.render(scene, camera);
   }
@@ -262,18 +272,18 @@ export function createLogo3D({ root, src, dockOffset = 0 }) {
   const onResize = () => { measure(); apply(); };
   window.addEventListener('resize', onResize);
 
-  root.addEventListener('click', () => {
-    if (docked) window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-
   /* ── teardown ───────────────────────────────────────────────────────── */
   function dispose() {
     disposed = true;
     gsap.ticker.remove(frame);
     window.removeEventListener('resize', onResize);
+    root.removeEventListener('pointerdown', onDown);
+    root.removeEventListener('pointermove', onMove);
+    root.removeEventListener('pointerup', onUp);
+    root.removeEventListener('pointercancel', onUp);
     flightST.kill(); velST.kill();
     shell.traverse((o) => { if (o.isMesh) o.geometry?.dispose(); });
-    chrome.dispose(); groove.dispose();
+    face.dispose(); wall.dispose();
     envRT.texture.dispose(); pmrem.dispose(); renderer.dispose();
     renderer.domElement.remove();
     root.setAttribute('style', baseStyle);

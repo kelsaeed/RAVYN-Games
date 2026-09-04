@@ -115,10 +115,14 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
    Only the measurement pose. main.js reads it once, then owns
    position/top/left/scale every frame. See Effect 5b in docs.          */
 .logo3d {
-  position: absolute; z-index: 3; pointer-events: none;
+  position: absolute; z-index: 3;
   top: 52vh; left: 50vw;
   width: min(70vw, 920px); height: 44vh;
   transform: translate(-50%, -50%);
+  /* pan-y, not none: a sideways drag turns the bird, a vertical one still
+     scrolls the page. user-select off or the drag starts selecting the hero. */
+  touch-action: pan-y;
+  user-select: none; -webkit-user-select: none;
 }
 .logo3d__canvas { width: 100%; height: 100%; }
 .logo3d__canvas canvas { display: block; width: 100% !important; height: 100% !important; }

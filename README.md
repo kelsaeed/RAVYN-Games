@@ -21,15 +21,50 @@ index.html          markup + CDN tags + importmap
 privacy.html        standalone, deliberately loud, honest placeholder
 styles.css          identity tokens and all layout
 src/main.js         Lenis↔GSAP bootstrap, wiring, asset list
-src/logo3d.js       Effect 5b — the extruded chrome raven that docks into the nav
+src/logo3d.js       Effect 5b — the extruded mark that turns, and docks into the nav
 src/effects.js      Effects 1, 2, 4, 6, the watch section, the marquee, the raven
-assets/ravyn-bird.svg   traced from KROW_LOGO.svg — #body, #wing, #facets, #pivot-wing
+assets/krow-mark.svg    the mark. One evenodd path: 1 outer contour, 17 holes
+assets/ravyn-bird.svg   superseded by krow-mark.svg, kept for reference
 assets/standing-raven.webp  section 1's bird, cut out; .png beside it is the master
-assets/flowers/     11 blooms cut to petals only, served as webp
-assets/favicon/     the icon set, cut out of Krow.PNG
+assets/flowers/     19 blooms cut to petals only, served as webp; 17 in rotation
+assets/favicon/     the icon set, rendered from krow-mark.svg in --accent
 assets/works/       14 generated placeholders
 docs/scroll-effects.md the technique reference every effect is built from
 ```
+
+## The mark
+
+`assets/krow-mark.svg` is traced from `colored raven logo.svg`. That file is a
+**jpeg inside an SVG wrapper** — one `<image>` element, no paths — so there was
+no geometry in it to extrude. The trace thresholds on saturation, cleans the
+jpeg ringing off the mask, walks the contours and simplifies hard, which snaps
+the wobble back onto the straight lines the artwork was drawn with. 251 points.
+
+Everything the mark does in 3D comes from that one file:
+
+- **The holes are the artwork's own negative space.** The eye, the slots down
+  the wing, the gap between the legs and the body facets are all white in the
+  original, so they trace as enclosed contours and extrude as voids you can see
+  straight through. The one exception is the eye, which is drawn as a pale
+  *orange* dot rather than a white one — the saturation threshold reads it as
+  ink, so it is punched in by hand at (783, 170) r=9 in source pixels.
+- **It has to be one path with `fill-rule="evenodd"`.** SVGLoader only pairs a
+  hole with its outer when both are subpaths of the same path element; split
+  across two groups it builds 18 separate slabs instead of one slab with holes.
+  evenodd because it nests by containment, which a traced contour cannot promise
+  about its winding.
+- **Two materials, not one.** ExtrudeGeometry groups the caps as index 0 and the
+  side walls as index 1, so the walls get a darker orange. Flat-coloured, the
+  turn reads as a sticker rotating rather than a slab.
+
+It turns slowly on its own, and you can grab it and throw it — the release
+velocity is the last pointer sample, not an average over the gesture, because
+what you feel on release is the flick at the end. A drag under 6px still counts
+as a click. There is a fixed 0.09rad tilt on X so the quarter turn is not a
+plain rectangle.
+
+The old mark had a wing that lifted on scroll energy. That is gone: this
+artwork is a single silhouette with no separable wing, and the turn replaces it.
 
 ## The raven's flower
 
@@ -50,9 +85,15 @@ Two things to know before moving anything:
   Swapping `src` instead looked identical on a warm cache and dropped frames on
   a cold one.
 
-`black-rose` and `black-cosmos` are cut and sitting in `assets/flowers/` but are
-left out of the rotation in `main.js` — against `--bg` they are a silhouette of
-nothing. The flower list there is ordered so no two neighbours share a hue.
+19 blooms are cut; 17 are in the rotation. `black-rose` and `black-cosmos` sit in
+`assets/flowers/` but are left out — against `--bg` they are a silhouette of
+nothing. The list in `main.js` is ordered so no two neighbours share a hue,
+including across the wrap from the last back to the first.
+
+That rotation is **457KB** and all of it decodes before the first hover, since
+the roll cannot wait on a network hop. If it needs to come down, drop `MAXSIDE`
+in the cutting script rather than the quality — the bloom paints at about 90 css
+px, so 320 is already 2× on a retina screen.
 
 The source images are stock photos of unknown licence. Clear the rights, or swap
 in owned photography, before this goes anywhere public. (A watermarked Vecteezy
