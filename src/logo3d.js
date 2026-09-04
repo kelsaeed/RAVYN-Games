@@ -108,23 +108,31 @@ export function createLogo3D({ root, src, faceSrc, dockOffset = 0 }) {
     envMapIntensity: 0.35, side: THREE.DoubleSide,
   });
 
-  /* Loaded alongside the SVG rather than gating on it — assigning a map after
-     the material exists is fine as long as needsUpdate is flipped. */
-  const faceTex = new THREE.TextureLoader().load(faceSrc, (t) => {
-    t.colorSpace = THREE.SRGBColorSpace;
-    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    t.needsUpdate = true;
-    face.map = t;
-    face.needsUpdate = true;
-  });
-
   let restSize = new THREE.Vector3(1, 1, 1);
   let ready = false;
   let disposed = false;
+  let faceTex = null;
+  let svgData = null;
 
-  /* ── build ──────────────────────────────────────────────────────────── */
-  new SVGLoader().load(src, (data) => {
-    if (disposed) return;
+  /* ── build ──────────────────────────────────────────────────────────────
+     Geometry and texture are fetched together but NOTHING is added to the
+     scene until both have landed. Adding the mesh on the SVG alone put an
+     untextured white bird on screen for as long as the texture took, which
+     read as three separate loading states instead of one. */
+  new THREE.TextureLoader().load(faceSrc, (t) => {
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    t.needsUpdate = true;
+    faceTex = t;
+    face.map = t;
+    face.needsUpdate = true;
+    build();
+  });
+  new SVGLoader().load(src, (data) => { svgData = data; build(); });
+
+  function build() {
+    if (disposed || ready || !svgData || !faceTex) return;
+    const data = svgData;
 
     const geoms = [];
     for (const p of data.paths) {
@@ -166,7 +174,7 @@ export function createLogo3D({ root, src, faceSrc, dockOffset = 0 }) {
     ready = true;
     fit();
     ScrollTrigger.refresh();
-  });
+  }
 
   function fit() {
     if (!ready) return;

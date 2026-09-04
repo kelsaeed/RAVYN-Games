@@ -101,10 +101,37 @@ Two things to know before moving anything:
 nothing. The list in `main.js` is ordered so no two neighbours share a hue,
 including across the wrap from the last back to the first.
 
-That rotation is **457KB** and all of it decodes before the first hover, since
-the roll cannot wait on a network hop. If it needs to come down, drop `MAXSIDE`
-in the cutting script rather than the quality — the bloom paints at about 90 css
-px, so 320 is already 2× on a retina screen.
+That rotation is **457KB**. If it needs to come down, drop `MAXSIDE` in the
+cutting script rather than the quality — the bloom paints at about 90 css px, so
+320 is already 2× on a retina screen.
+
+## Loading and paint cost
+
+Four rules here, all of them things that were got wrong once and are easy to
+undo by accident:
+
+- **Only the flower on show is fetched up front.** Seventeen at once is 457KB of
+  parallel requests and it was starving the raven photograph, which turned up
+  late or not until a reload. The rest load 250ms after `load`, and `start()`
+  forces them in case you hover before that. The roll skips any image that has
+  not decoded, so it can never blink a hole in the twig.
+- **A plain timer, not `requestIdleCallback`.** rIC can be starved of an idle
+  period and then the rest never arrive at all — measured, not guessed: 1 of 17
+  still loaded long after `load`.
+- **No CSS filters on the big images.** The grade on the section-1 bird
+  (`saturate(.92) contrast(1.04)`) is baked into the webp — same pixels every
+  paint, so the compositor had no business recomputing it on a 1024×1536 image.
+  Re-bake with the script rather than re-adding the filter. The bloom's
+  `drop-shadow` is gone for the same reason: it re-blurred a sprite nine times a
+  second and against `--bg` you could not see it.
+- **The mark waits for its texture.** Geometry and texture load together but
+  nothing is added to the scene until both land. Adding the mesh on the SVG
+  alone put an untextured white bird on screen until the texture arrived, which
+  read as three separate loading states.
+
+`krow-mark-face.webp` and `standing-raven.webp` are both `<link rel="preload">`ed
+because neither is discoverable early: the texture only once the module graph has
+parsed, the bird only once CSS has built the box it sits in.
 
 The source images are stock photos of unknown licence. Clear the rights, or swap
 in owned photography, before this goes anywhere public. (A watermarked Vecteezy

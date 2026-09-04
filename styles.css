@@ -181,7 +181,11 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
    If the slide budget is smaller than the panel's travel, the panel crosses
    the screen faster than you scroll and the whole thing reads as a teleport. */
 .reveal {
-  --hold:  min(55vw, 800px);
+  /* Was min(55vw, 800px). That much hold is 800px of scrolling in which nothing
+     whatsoever moves, which reads as the page having stopped responding rather
+     than as a beat. Section 1 also recedes as the panel comes now, so it does
+     not need the pause to be legible. Keep holdPx() in effects.js in step. */
+  --hold:  min(26vw, 320px);
   --slide: min(95vw, 1800px);
   height: calc(100svh + var(--hold) + var(--slide));
   position: relative;
@@ -253,8 +257,9 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
 .raven__bird {
   display: block; width: 100%; height: 100%;
   object-fit: contain; object-position: left top;
-  /* the artwork is lit warm; a touch of cool keeps it in the page's key */
-  filter: saturate(.92) contrast(1.04);
+  /* The grade that used to live here (saturate .92 contrast 1.04) is baked into
+     the webp. Same pixels every paint, so the compositor had no business
+     recomputing it on a 1024x1536 image. Re-bake, do not re-add. */
 }
 
 /* Every bloom is stacked in this box and only one is shown. Sizing the box
@@ -273,7 +278,8 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
   object-fit: contain;
   opacity: 0;
   transform: scale(.82) rotate(-8deg);
-  filter: drop-shadow(0 6px 14px rgba(0,0,0,.55));
+  /* no drop-shadow here: it made the compositor re-blur a 320px sprite on every
+     swap, nine times a second, and against --bg you could not see it anyway */
 }
 .raven__bloom img.is-on {
   opacity: 1;

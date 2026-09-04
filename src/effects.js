@@ -28,7 +28,7 @@ export function initHero() {
 /* Mirrors --hold in the .reveal rule. The stage reserves hold + slide; if this
    number drifts from the CSS the panel gets less scroll than it needs to cross
    the viewport, and a "slide" that outruns the scroll reads as a teleport. */
-const holdPx = () => Math.min(window.innerWidth * 0.55, 800);
+const holdPx = () => Math.min(window.innerWidth * 0.26, 320);
 
 export function initPanel() {
   const stage = document.querySelector('.reveal');
@@ -83,18 +83,44 @@ export function initRaven({ flowers, period = 110 }) {
   const bloom = document.getElementById('ravenBloom');
   if (!root || !bloom || !flowers?.length) return;
 
+  /* Only the one on show is fetched up front. Seventeen at once is about 450KB
+     of parallel requests, and they were starving the raven photograph that has
+     to be on screen for any of this to make sense - it turned up late or not
+     until a reload. The rest come in once the page has gone quiet. */
+  let at = Math.floor(Math.random() * flowers.length);   // a different one each visit
   const imgs = flowers.map((src, i) => {
     const img = new Image();
-    img.src = src;
     img.alt = '';
     img.decoding = 'async';
-    if (i === 0) img.className = 'is-on';
+    if (i === at) { img.src = src; img.className = 'is-on'; }
     bloom.append(img);
     return img;
   });
 
-  let at = 0;
+  let loadedRest = false;
+  function loadRest() {
+    if (loadedRest) return;
+    loadedRest = true;
+    imgs.forEach((img, i) => { if (!img.src) img.src = flowers[i]; });
+  }
+  /* A plain timer after load, not requestIdleCallback. rIC can be starved of an
+     idle period and then these never arrive at all until you hover; all this
+     needs is to be out of the way of the first paint, which a short delay after
+     load already guarantees. */
+  const soon = () => window.setTimeout(loadRest, 250);
+  if (document.readyState === 'complete') soon();
+  else window.addEventListener('load', soon, { once: true });
+
   let timer = 0;
+  /* Never land on one that has not decoded yet - an unloaded img paints nothing
+     and the roll would blink a hole in the twig. */
+  function nextLoaded(from, step) {
+    for (let k = 1; k <= imgs.length; k++) {
+      const i = (from + step * k + imgs.length * k) % imgs.length;
+      if (imgs[i].complete && imgs[i].naturalWidth) return i;
+    }
+    return from;
+  }
   const show = (i) => {
     imgs[at].classList.remove('is-on');
     at = (i + imgs.length) % imgs.length;
@@ -103,12 +129,13 @@ export function initRaven({ flowers, period = 110 }) {
 
   const start = () => {
     root.classList.add('is-used');            // the nudge has done its job
+    loadRest();                               // in case they got here early
     /* Reduced motion still gets a new flower, just one per visit instead of
        nine a second - the point of the interaction survives, the strobe does not. */
-    if (still) { show(at + 1); return; }
+    if (still) { show(nextLoaded(at, 1)); return; }
     if (timer) return;
     root.classList.add('is-rolling');
-    timer = setInterval(() => show(at + 1), period);
+    timer = setInterval(() => show(nextLoaded(at, 1)), period);
   };
   const stop = () => {
     clearInterval(timer);
@@ -132,11 +159,10 @@ export function initRaven({ flowers, period = 110 }) {
   root.addEventListener('focus', start);
   root.addEventListener('blur', stop);
   root.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(at + 1); }
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault(); loadRest(); show(nextLoaded(at, 1));
+    }
   });
-
-  /* Land on a different flower each visit rather than always the dahlia. */
-  show(Math.floor(Math.random() * imgs.length));
 
   return { start, stop, show };
 }
