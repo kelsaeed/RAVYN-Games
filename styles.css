@@ -175,9 +175,15 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
   display: flex; align-items: start;
   padding-top: clamp(92px, 23vh, 230px);
 }
-.reveal__back { background: var(--bg); }
+/* Both of these are positioned, so without an explicit z-index they stay on
+   z-index:auto and never open a stacking context of their own. The raven and
+   the copy inside the back carry z-indexes to layer against the big word, and
+   those would otherwise escape into .reveal__screen and paint on top of the
+   panel sliding over them. Pinning the two layers here keeps them inside. */
+.reveal__back { background: var(--bg); z-index: 0; }
 .reveal__panel {
   background: var(--flood);
+  z-index: 1;
   transform: translate3d(100%, 0, 0);
   will-change: transform;
 }
@@ -201,10 +207,13 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
    down with it, so the back becomes a plain stage and its three layers are
    placed on it: word behind, bird over that, copy off to the right. */
 .reveal__back { display: block; padding-top: 0; }
+/* Full bleed on purpose. The word has to reach the edge of the screen, so the
+   1600 wrap cannot live on this box - --gut reproduces that centred gutter for
+   the two layers that still want it, and the word simply ignores it. */
 .studio {
+  --gut: max(var(--pad), calc((100% - 1600px) / 2 + var(--pad)));
   position: relative;
   height: 100%; width: 100%;
-  max-width: 1600px; margin-inline: auto;
   padding-inline: var(--pad);
 }
 
@@ -214,7 +223,7 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
   --bloom: 28%;
   /* anchored to the floor, so it grows upward and never crops at the feet */
   position: absolute;
-  left: var(--pad); bottom: 0;
+  left: var(--gut); bottom: 0;
   z-index: 1;
   height: min(88vh, 1000px);
   aspect-ratio: 1024 / 1536;
@@ -297,14 +306,17 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
    z-index 1 so the word runs behind its body and out the other side. */
 .studio__word {
   position: absolute;
-  left: var(--pad); bottom: clamp(18px, 5vh, 60px);
+  /* right:0 lands the O on the edge on its own. letter-spacing is negative, so
+     the text box already ends .04em short of the last glyph's advance, which is
+     about the O's right side bearing - pulling it further right only clips it. */
+  right: 0; left: auto; bottom: clamp(18px, 5vh, 60px);
   z-index: 0; margin: 0;
   font-family: var(--display);
   font-size: clamp(54px, 10.5vw, 190px);
   line-height: .82; font-weight: 700;
   letter-spacing: -.04em; text-transform: uppercase;
   color: rgba(238, 241, 245, .085);
-  white-space: nowrap; user-select: none;
+  white-space: nowrap; text-align: right; user-select: none;
 }
 
 /* ── the copy, off to the right ───────────────────────────────────────
@@ -313,7 +325,7 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
    still sit on exactly the same line as the panel slides across. */
 .studio__words {
   position: absolute;
-  right: var(--pad); top: clamp(92px, 23vh, 230px);
+  right: var(--gut); top: clamp(92px, 23vh, 230px);
   z-index: 2;
   width: min(40%, 520px);
 }
@@ -353,7 +365,7 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
     padding-top: clamp(84px, 14vh, 130px);
   }
   .studio__word {
-    position: static; align-self: flex-start;
+    position: static; align-self: flex-start; text-align: left;
     font-size: clamp(30px, 9.5vw, 64px);
     color: rgba(238, 241, 245, .12);
   }
@@ -375,8 +387,8 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
     padding-top: clamp(44px, 8vh, 68px);
   }
   .studio__word {
-    position: absolute; align-self: auto;
-    left: var(--pad); bottom: clamp(6px, 2vh, 16px);
+    position: absolute; align-self: auto; text-align: right;
+    left: auto; right: 0; bottom: clamp(6px, 2vh, 16px);
     font-size: clamp(28px, 7.5vw, 60px);
   }
   .raven { height: min(72vh, 260px); flex: none; margin-inline: 0; }

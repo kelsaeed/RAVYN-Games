@@ -34,6 +34,7 @@ export function initPanel() {
   const stage = document.querySelector('.reveal');
   const panel = stage?.querySelector('.reveal__panel');
   if (!panel) return;
+  const back = stage.querySelector('.studio');
   if (still) { gsap.set(panel, { xPercent: 0, x: 0 }); return; }
 
   /* The CSS translate is only the pre-JS pose. Zero the px component GSAP
@@ -41,21 +42,32 @@ export function initPanel() {
      as far right as it should. */
   gsap.set(panel, { x: 0 });
 
-  /* fromTo, not to: with a scrubbed tween and invalidateOnRefresh, a plain
-     `to` re-records its start value from wherever the panel currently sits.
-     Any refresh mid-slide (fonts settling, the SVG landing) then rebases the
-     range and the panel jumps. An explicit from is re-read as 100 every time. */
-  gsap.fromTo(panel,
-    { xPercent: 100 },
-    {
-      xPercent: 0, ease: 'none',
-      scrollTrigger: {
-        trigger: stage,
-        start: () => 'top+=' + holdPx() + ' top',   // hold the opening screen first
-        end: 'bottom bottom',
-        scrub: true, invalidateOnRefresh: true,
-      },
-    });
+  /* One timeline so the two halves of the handover cannot drift apart under
+     scrub. fromTo, not to: with invalidateOnRefresh a plain `to` re-records
+     its start from wherever things currently sit, so any refresh mid-slide
+     (fonts settling, the SVG landing) rebases the range and the panel jumps.
+     An explicit from is re-read every time. */
+  const tl = gsap.timeline({
+    scrollTrigger: {
+      trigger: stage,
+      start: () => 'top+=' + holdPx() + ' top',   // hold the opening screen first
+      end: 'bottom bottom',
+      scrub: true, invalidateOnRefresh: true,
+    },
+  });
+
+  tl.fromTo(panel, { xPercent: 100 }, { xPercent: 0, ease: 'none', duration: 1 }, 0);
+
+  /* Section 1 does not just get covered, it leaves: drifts left, drops back a
+     little and fades out. Finishing at .82 means it has gone before the panel
+     lands, so the handover reads as one thing following another rather than
+     two things crossing. Only the contents move - .reveal__back keeps painting
+     its own --bg underneath, so nothing shows through the gap. */
+  if (back) {
+    tl.fromTo(back,
+      { xPercent: 0, opacity: 1, scale: 1 },
+      { xPercent: -16, opacity: 0, scale: .94, ease: 'none', duration: .82 }, 0);
+  }
 }
 
 /* ── the raven's flower ───────────────────────────────────────────────
