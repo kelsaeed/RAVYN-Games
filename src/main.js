@@ -26,12 +26,16 @@ if (!still) {
 const WORKS = Array.from({ length: 14 }, (_, i) =>
   `./assets/works/work${String(i + 1).padStart(2, '0')}.png`);
 
-/* Ordered so no two neighbours share a hue - the roll should read as a
-   flicker of colour, not a slow fade through the reds.
+/* Ordered so no two neighbours share a hue, including across the wrap from the
+   last back to the first - the roll should read as a flicker of colour, not a
+   slow fade through the reds.
    black-rose and black-cosmos are cut and sitting in assets/flowers too, but
    they are left out: against --bg they are a silhouette of nothing. */
 const FLOWERS = ['red-dahlia', 'blue-anemone', 'yellow-gerbera', 'magenta-hibiscus',
-                 'white-poppy', 'orange-lily', 'pink-rose', 'orange-gerbera', 'red-rose']
+                 'white-poppy', 'orange-lily', 'lilac-anemone', 'cream-narcissus',
+                 'crimson-dahlia', 'green-camellia', 'pink-rose', 'yellow-daisy',
+                 'midnight-camellia', 'apricot-cosmos', 'candy-rose', 'red-rose',
+                 'orange-gerbera']
                 .map((n) => `./assets/flowers/${n}.webp`);
 
 initHero();
@@ -46,7 +50,7 @@ const logoRoot = document.getElementById('logo3d');
 if (logoRoot) {
   createLogo3D({
     root: logoRoot,
-    src: './assets/ravyn-bird.svg',
+    src: './assets/krow-mark.svg',
     // park it on the nav line
     dockOffset: window.innerWidth <= 640 ? window.innerHeight * 0.012 : 4,
   });
