@@ -43,7 +43,11 @@
 </header>
 
 <!-- ── the 3D raven. CSS only sets the measurement pose; JS takes over. ── -->
-<div class="logo3d logo3d--hero" id="logo3d"><div class="logo3d__canvas"></div></div>
+<div class="logo3d logo3d--hero" id="logo3d">
+  <div class="logo3d__canvas"></div>
+  <!-- rides inside the box, so it shrinks and fades away as the mark docks -->
+  <p class="logo3d__hint" id="logo3dHint" aria-hidden="true"><i></i>drag to turn</p>
+</div>
 
 <main id="top">
 

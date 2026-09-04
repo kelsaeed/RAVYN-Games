@@ -51,6 +51,7 @@ if (logoRoot) {
   createLogo3D({
     root: logoRoot,
     src: './assets/krow-mark.svg',
+    faceSrc: './assets/krow-mark-face.webp',
     // park it on the nav line
     dockOffset: window.innerWidth <= 640 ? window.innerHeight * 0.012 : 4,
   });

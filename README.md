@@ -23,7 +23,8 @@ styles.css          identity tokens and all layout
 src/main.js         Lenis↔GSAP bootstrap, wiring, asset list
 src/logo3d.js       Effect 5b — the extruded mark that turns, and docks into the nav
 src/effects.js      Effects 1, 2, 4, 6, the watch section, the marquee, the raven
-assets/krow-mark.svg    the mark. One evenodd path: 1 outer contour, 17 holes
+assets/krow-mark.svg    the mark's outer silhouette, solid, no holes
+assets/krow-mark-face.webp  the artwork, cropped to that viewBox, mapped on the caps
 assets/ravyn-bird.svg   superseded by krow-mark.svg, kept for reference
 assets/standing-raven.webp  section 1's bird, cut out; .png beside it is the master
 assets/flowers/     19 blooms cut to petals only, served as webp; 17 in rotation
@@ -40,28 +41,38 @@ no geometry in it to extrude. The trace thresholds on saturation, cleans the
 jpeg ringing off the mask, walks the contours and simplifies hard, which snaps
 the wobble back onto the straight lines the artwork was drawn with. 251 points.
 
-Everything the mark does in 3D comes from that one file:
+It comes in two halves that **must be regenerated together**: `krow-mark.svg` is
+the outer silhouette and `krow-mark-face.webp` is the artwork, cropped to exactly
+that SVG's viewBox. Change one without the other and the art slides off the bird.
 
-- **The holes are the artwork's own negative space.** The eye, the slots down
-  the wing, the gap between the legs and the body facets are all white in the
-  original, so they trace as enclosed contours and extrude as voids you can see
-  straight through. The one exception is the eye, which is drawn as a pale
-  *orange* dot rather than a white one — the saturation threshold reads it as
-  ink, so it is punched in by hand at (783, 170) r=9 in source pixels.
-- **It has to be one path with `fill-rule="evenodd"`.** SVGLoader only pairs a
-  hole with its outer when both are subpaths of the same path element; split
-  across two groups it builds 18 separate slabs instead of one slab with holes.
-  evenodd because it nests by containment, which a traced contour cannot promise
-  about its winding.
+- **The slab is solid. No holes.** An earlier pass traced the white facets as
+  enclosed contours and extruded them as voids you could see through — the eye,
+  the wing slots, the gap between the legs. Khaled's call was that it read as
+  weird and gappy, so the interior is cream *surface* now, carried on a texture
+  mapped to the caps rather than cut out of the geometry.
+- **Separating bird from backdrop is a saturation test.** The backdrop is a
+  transparency chequerboard baked into the jpeg and is perfectly neutral
+  (saturation 0); the cream facets are warm (saturation ~24). Anything neutral
+  and reachable from the border is backdrop, and the cream is walled in by the
+  orange outline so the fill can never reach it.
+- **The cap UVs are rebuilt by hand.** ExtrudeGeometry's own are raw model
+  coordinates, and `flipY` mirrors the positions under them afterwards, so they
+  are recomputed from the *final* positions. The side walls get nonsense UVs out
+  of that, which costs nothing because the wall material carries no map.
 - **Two materials, not one.** ExtrudeGeometry groups the caps as index 0 and the
-  side walls as index 1, so the walls get a darker orange. Flat-coloured, the
-  turn reads as a sticker rotating rather than a slab.
+  side walls as index 1, so the walls get the deep orange of the logo's own
+  outline. Flat-coloured, the turn reads as a sticker rotating rather than a slab.
+- **The lighting is deliberately soft.** This replaced a chrome mark, and those
+  lights blew the cream facets out to flat white every time the face swung toward
+  the key. Ambient does most of the work now so the colours stay the colours.
 
 It turns slowly on its own, and you can grab it and throw it — the release
 velocity is the last pointer sample, not an average over the gesture, because
 what you feel on release is the flick at the end. A drag under 6px still counts
 as a click. There is a fixed 0.09rad tilt on X so the quarter turn is not a
-plain rectangle.
+plain rectangle. A **drag to turn** label sits under it and retires the first
+time you grab it; it also fades out over the first third of the dock flight,
+past which the box is too small to render the label legibly anyway.
 
 The old mark had a wing that lifted on scroll energy. That is gone: this
 artwork is a single silhouette with no separable wing, and the turn replaces it.

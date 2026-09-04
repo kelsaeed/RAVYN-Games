@@ -3,10 +3,11 @@
    See docs/scroll-effects.md. Framework-agnostic: this module only needs a
    DOM element, plus gsap + ScrollTrigger on window.
 
-   The mark is assets/krow-mark.svg: one evenodd path, one outer contour and
-   seventeen holes. Extruded, those holes go clean through the slab, so the
-   eye, the slots down the wing and the gap between the legs are all real
-   openings you can see daylight through as it turns.
+   The mark is assets/krow-mark.svg — the OUTER SILHOUETTE ONLY, no holes — and
+   assets/krow-mark-face.webp, the artwork baked flat and mapped onto the caps.
+   The cream facets and the outline are painted on, not cut out, so the slab
+   stays solid all the way round. The texture is cropped to exactly the SVG's
+   viewBox, so the two have to be regenerated together or the art slides off.
    ========================================================================== */
 
 import * as THREE from 'three';
@@ -53,7 +54,7 @@ function flipY(geom) {
   geom.computeVertexNormals();
 }
 
-export function createLogo3D({ root, src, dockOffset = 0 }) {
+export function createLogo3D({ root, src, faceSrc, dockOffset = 0 }) {
   const container = root.querySelector('.logo3d__canvas');
   if (!container) throw new Error('logo3d: missing .logo3d__canvas');
 
@@ -80,26 +81,41 @@ export function createLogo3D({ root, src, dockOffset = 0 }) {
   const envRT = pmrem.fromScene(new RoomEnvironment(), 0.04);
   scene.environment = envRT.texture;
 
-  const key  = new THREE.DirectionalLight(0xffffff, 2.4); key.position.set(3, 4, 8);
-  const fill = new THREE.DirectionalLight(0xa8d7ff, 1.1); fill.position.set(-4, -1, 6);
-  const rim  = new THREE.DirectionalLight(0xffffff, 1.4); rim.position.set(0, 2, -8);
-  scene.add(key, fill, rim, new THREE.AmbientLight(0xffffff, 0.75));
+  /* Much softer than the chrome version this replaces. The caps carry printed
+     artwork now, and the old key light blew the cream facets out to flat white
+     every time the face swung toward it. Ambient does most of the work so the
+     colours stay the colours; the directionals only shape the edges. */
+  const key  = new THREE.DirectionalLight(0xffffff, 0.9); key.position.set(3, 4, 8);
+  const fill = new THREE.DirectionalLight(0xa8d7ff, 0.45); fill.position.set(-4, -1, 6);
+  const rim  = new THREE.DirectionalLight(0xffffff, 0.6); rim.position.set(0, 2, -8);
+  scene.add(key, fill, rim, new THREE.AmbientLight(0xffffff, 1.45));
 
   const shell = new THREE.Group();
   scene.add(shell);
 
   /* Two materials, because ExtrudeGeometry groups the caps as index 0 and the
-     side walls as index 1. A darker wall is what makes the thickness legible
+     side walls as index 1. The caps carry the artwork; the wall is the deep
+     orange of the logo's own outline, which is what makes the thickness legible
      while it turns — one flat colour and it reads as a sticker, not a slab. */
   const face = new THREE.MeshPhysicalMaterial({
-    color: 0xf03902, metalness: 0.45, roughness: 0.28,
-    clearcoat: 0.9, clearcoatRoughness: 0.18,
-    envMapIntensity: 1.25, side: THREE.DoubleSide,
+    color: 0xffffff, metalness: 0.0, roughness: 0.62,
+    clearcoat: 0.22, clearcoatRoughness: 0.4,
+    envMapIntensity: 0.3, side: THREE.DoubleSide,
   });
   const wall = new THREE.MeshPhysicalMaterial({
-    color: 0x8f1e00, metalness: 0.7, roughness: 0.36,
-    clearcoat: 0.5, clearcoatRoughness: 0.3,
-    envMapIntensity: 1.0, side: THREE.DoubleSide,
+    color: 0xa32700, metalness: 0.25, roughness: 0.5,
+    clearcoat: 0.2, clearcoatRoughness: 0.4,
+    envMapIntensity: 0.35, side: THREE.DoubleSide,
+  });
+
+  /* Loaded alongside the SVG rather than gating on it — assigning a map after
+     the material exists is fine as long as needsUpdate is flipped. */
+  const faceTex = new THREE.TextureLoader().load(faceSrc, (t) => {
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    t.needsUpdate = true;
+    face.map = t;
+    face.needsUpdate = true;
   });
 
   let restSize = new THREE.Vector3(1, 1, 1);
@@ -112,8 +128,6 @@ export function createLogo3D({ root, src, dockOffset = 0 }) {
 
     const geoms = [];
     for (const p of data.paths) {
-      /* createShapes reads the path's fill-rule and nests the subpaths, so the
-         seventeen cut-outs arrive as shape.holes and get extruded as voids. */
       for (const shape of SVGLoader.createShapes(p)) {
         geoms.push(new THREE.ExtrudeGeometry(shape, {
           depth: DEPTH, bevelEnabled: true, bevelSegments: 2, steps: 1,
@@ -131,6 +145,21 @@ export function createLogo3D({ root, src, dockOffset = 0 }) {
     for (const g of geoms) {
       g.translate(-cx, -cy, -DEPTH / 2);   // centred on its own thickness, so it
       flipY(g);                            // turns about the middle of the slab
+      /* ExtrudeGeometry's own cap UVs are raw model coordinates, and flipY has
+         since mirrored the positions under them. Rebuild from the FINAL
+         positions so the artwork lands the right way up and fills the box the
+         texture was cropped to. The walls get nonsense UVs out of this, which
+         costs nothing because the wall material carries no map. */
+      g.computeBoundingBox();
+      const b = g.boundingBox;
+      const sx = b.max.x - b.min.x || 1;
+      const sy = b.max.y - b.min.y || 1;
+      const pos = g.attributes.position;
+      const uv = g.attributes.uv;
+      for (let i = 0; i < uv.count; i++) {
+        uv.setXY(i, (pos.getX(i) - b.min.x) / sx, (pos.getY(i) - b.min.y) / sy);
+      }
+      uv.needsUpdate = true;
       shell.add(new THREE.Mesh(g, [face, wall]));
     }
 
@@ -166,9 +195,14 @@ export function createLogo3D({ root, src, dockOffset = 0 }) {
     fit();
   }
 
+  const hint = root.querySelector('.logo3d__hint');
+
   function apply() {
     progress = gsap.utils.clamp(0, 1, window.scrollY / travel);
     docked = progress >= 0.98;
+    /* gone by a third of the way up: past that the box is small enough that the
+       label would be shrinking into an unreadable smear on its way to the nav */
+    if (hint) hint.style.opacity = String(gsap.utils.clamp(0, 1, 1 - progress * 3));
     gsap.set(root, {
       position: 'fixed',
       top: Math.max(dockTop, startTop - window.scrollY),
@@ -192,6 +226,7 @@ export function createLogo3D({ root, src, dockOffset = 0 }) {
 
   function onDown(e) {
     if (still) return;
+    root.classList.add('is-used');        // the nudge has done its job
     dragging = true;
     lastX = e.clientX; lastT = e.timeStamp || performance.now();
     travelled = 0; vpx = 0; spin = 0;
@@ -283,6 +318,7 @@ export function createLogo3D({ root, src, dockOffset = 0 }) {
     root.removeEventListener('pointercancel', onUp);
     flightST.kill(); velST.kill();
     shell.traverse((o) => { if (o.isMesh) o.geometry?.dispose(); });
+    faceTex?.dispose();
     face.dispose(); wall.dispose();
     envRT.texture.dispose(); pmrem.dispose(); renderer.dispose();
     renderer.domElement.remove();
