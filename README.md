@@ -62,8 +62,15 @@ Three things about `.bigword`:
   contents and bottom padding alone lifts them into the fixed nav.
 
 `#work` is the exception: its gallery runs to the bottom of the section, so
-there the word is `.bigword--flow` — in normal flow between the paragraph and
-the gallery, still hard right against the screen.
+there the word is `.bigword--flow` — in normal flow above the gallery, still
+hard right against the screen.
+
+**That section is budgeted to exactly one screen.** Word + strip + caption have
+to add up to under `100svh`, so each piece is capped in vh and the strip is
+`min(42vw, 56vh)` rather than the `44vw` with a `72vh` ceiling it used to be —
+that ran the cards off the bottom on anything short and wide. Measured at
+1920×1080, 1600×900, 1440×720, 1280×620, 1024×560, 900×1200, 430×860 and
+390×700; if you add anything to that section, re-measure.
 
 ## The courier, and the contact form
 

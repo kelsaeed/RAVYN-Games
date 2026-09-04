@@ -484,11 +484,23 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
 }
 
 /* ── Effect 6 — hold-to-skim gallery ──────────────────────────────────── */
-.skim-section { padding-bottom: clamp(60px, 10vh, 140px); }
+/* Budgeted to one screen, whatever the screen. Word + strip + caption have to
+   add up to less than 100svh, so every piece here is capped in vh and the
+   paddings are trimmed off what .section gives everything else. The strip used
+   to be 44vw tall with a 72vh ceiling, which on anything short and wide ran
+   the cards off the bottom of the viewport. */
+.skim-section {
+  min-height: 100svh;
+  display: flex; flex-direction: column; justify-content: center;
+  gap: clamp(8px, 1.6vh, 22px);
+  padding-block: clamp(64px, 10vh, 120px) clamp(28px, 5vh, 64px);
+}
+.skim-section .bigword { font-size: clamp(40px, 8vw, 132px); }
+.skim-section .bigword--flow { margin: 0; }
 .skim {
   position: relative; width: 100vw;
-  height: 44vw; max-height: 72vh; min-height: 300px;
-  margin-top: clamp(30px, 5vw, 70px);
+  height: min(42vw, 56vh); min-height: 190px;
+  margin-top: 0;
   overflow: hidden; cursor: pointer;
   touch-action: pan-y;                 /* JS owns X, browser keeps Y */
   user-select: none; -webkit-user-select: none;
@@ -496,7 +508,8 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
 /* on a phone vw and vh diverge hard — 68vw filled only a third of the screen
    while the desktop strip filled ~70%. Sized off vh so the strip reads the
    same on both. */
-@media (max-width: 640px) { .skim { height: 50vh; min-height: 240px; max-height: none; } }
+/* on a phone vw and vh diverge hard — 42vw is a sliver, so go back to vh */
+@media (max-width: 640px) { .skim { height: min(46vh, 380px); min-height: 180px; } }
 .skim::before, .skim::after {
   content: ""; position: absolute; top: 0; height: 100%; width: 7vw;
   z-index: 2; pointer-events: none; opacity: .85;
