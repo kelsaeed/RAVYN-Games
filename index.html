@@ -134,7 +134,7 @@
 
     <!-- in flow, not absolute: the gallery runs to the bottom of this section,
          so a placed word would land on top of it -->
-    <p class="bigword bigword--flow" aria-hidden="true"><b>How</b> do we play</p>
+    <p class="bigword bigword--flow" aria-hidden="true"><b>How</b> we play</p>
 
     <div class="skim" id="skim">
       <div class="skim__scale">
@@ -150,13 +150,9 @@
   <!-- ── the watch — look away, then look at you ── -->
   <section class="watch" id="team">
     <div class="watch__screen">
+      <!-- the word is the only copy in here now, so the cards are sized to
+           leave it a clear floor rather than sitting on the letterforms -->
       <p class="bigword" aria-hidden="true"><b>Who</b> are we</p>
-      <div class="wrap">
-        <p class="lead">
-          Keep scrolling and they turn round. Empty frames for now —
-          real portraits drop straight in.
-        </p>
-      </div>
       <div class="watch__row" id="watch">
         <figure class="watch__card">
           <div class="watch__face"><span class="watch__eye"></span><span class="watch__eye"></span></div>
@@ -181,13 +177,43 @@
   <!-- ── outro ── -->
   <section class="section section--floor" id="contact">
     <p class="bigword" aria-hidden="true"><b>Where</b> to find us</p>
-    <div class="wrap">
-      <div>
-        <h2 class="big">Bring us<br>something <em class="accent">odd</em>.</h2>
-        <a class="btn" href="mailto:hello@ravyngames.com">
-          <span>hello@ravyngames.com</span><i>&#8599;</i>
-        </a>
+    <div class="wrap contact__grid">
+
+      <!-- Four frames of one animation, cropped to a shared box so they line up.
+           Scrolling the section past you steps through them; they cross-fade
+           fast enough to read as movement rather than as four pictures. -->
+      <div class="courier" id="courier">
+        <div class="courier__stack">
+          <img class="courier__frame is-on" src="./assets/email-raven/email-raven-1.webp"
+               width="900" height="566" alt="A raven taking a message out of a bottle." decoding="async">
+          <img class="courier__frame" src="./assets/email-raven/email-raven-2.webp"
+               width="900" height="566" alt="" aria-hidden="true" decoding="async">
+          <img class="courier__frame" src="./assets/email-raven/email-raven-3.webp"
+               width="900" height="566" alt="" aria-hidden="true" decoding="async">
+          <img class="courier__frame" src="./assets/email-raven/email-raven-4.webp"
+               width="900" height="566" alt="" aria-hidden="true" decoding="async">
+        </div>
+        <p class="courier__say" aria-hidden="true">You expected flowers? That’s the raven above’s job.</p>
       </div>
+
+      <form class="cform" id="cform" novalidate>
+        <div class="cform__row">
+          <label class="cfield"><span>First name</span>
+            <input name="first" autocomplete="given-name" required></label>
+          <label class="cfield"><span>Last name</span>
+            <input name="last" autocomplete="family-name" required></label>
+        </div>
+        <div class="cform__row">
+          <label class="cfield"><span>Email</span>
+            <input type="email" name="email" autocomplete="email" required></label>
+          <label class="cfield"><span>Phone</span>
+            <input type="tel" name="phone" autocomplete="tel"></label>
+        </div>
+        <label class="cfield"><span>Message</span>
+          <textarea name="message" rows="1" required></textarea></label>
+        <button class="btn" type="submit"><span>Send it with the raven</span><i>&#8599;</i></button>
+        <p class="cform__note mono" id="cformNote" role="status"></p>
+      </form>
     </div>
   </section>
 

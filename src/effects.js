@@ -167,6 +167,99 @@ export function initRaven({ flowers, period = 110 }) {
   return { start, stop, show };
 }
 
+/* ── the courier — four frames, stepped by the scroll ─────────────────
+   Not scrubbed opacity: the frames SNAP from one to the next and the .09s CSS
+   fade does the blending. Cross-fading them continuously turns the sequence
+   into a smear of two ravens at once instead of one bird moving. */
+export function initCourier() {
+  const root = document.getElementById('courier');
+  const frames = root ? [...root.querySelectorAll('.courier__frame')] : [];
+  if (frames.length < 2) return;
+
+  let at = 0;
+  /* Sets the class on all four rather than moving it off the one it thinks is
+     showing. Tracking `at` alone means anything else that touches the class -
+     including this module being re-inited - leaves two frames stacked. */
+  const show = (i) => {
+    i = Math.min(frames.length - 1, Math.max(0, i));
+    if (i === at) return;
+    frames.forEach((f, k) => f.classList.toggle('is-on', k === i));
+    at = i;
+  };
+
+  if (!still) {
+    ScrollTrigger.create({
+      trigger: root,
+      /* the window where the bird is comfortably on screen, rather than the
+         whole pass — the first and last frames are off the edge otherwise */
+      start: 'top 82%',
+      end: 'bottom 28%',
+      invalidateOnRefresh: true,
+      onUpdate: (self) => show(Math.floor(self.progress * frames.length)),
+    });
+  }
+
+  /* No hover on a touch screen, so a tap toggles the bird talking. */
+  root.addEventListener('click', () => root.classList.toggle('is-saying'));
+
+  return { show };
+}
+
+/* ── the contact form ─────────────────────────────────────────────────── */
+export function initContactForm({ to }) {
+  const form = document.getElementById('cform');
+  if (!form) return;
+  const note = document.getElementById('cformNote');
+  const box = form.querySelector('textarea');
+
+  /* field-sizing: content would do this in CSS but is not everywhere yet, and
+     a textarea that will not grow is worse than a line of script. */
+  const grow = () => {
+    box.style.height = 'auto';
+    box.style.height = box.scrollHeight + 'px';
+  };
+  box.addEventListener('input', grow);
+  grow();
+
+  const fieldOf = (el) => el.closest('.cfield');
+  form.addEventListener('input', (e) => fieldOf(e.target)?.classList.remove('is-bad'));
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const data = new FormData(form);
+    const missing = [...form.elements].filter(
+      (el) => el.required && !el.value.trim());
+    const email = (data.get('email') || '').trim();
+    const badEmail = email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+    form.querySelectorAll('.is-bad').forEach((n) => n.classList.remove('is-bad'));
+    if (missing.length || badEmail) {
+      missing.forEach((el) => fieldOf(el)?.classList.add('is-bad'));
+      if (badEmail) fieldOf(form.elements.email)?.classList.add('is-bad');
+      note.className = 'cform__note mono is-bad';
+      note.textContent = badEmail && !missing.length
+        ? 'That email does not look right.'
+        : 'The raven needs the rest of it first.';
+      (missing[0] || form.elements.email).focus();
+      return;
+    }
+
+    /* No backend on a static host, so this hands off to the visitor's mail app.
+       Swap for a real endpoint before launch - see the README. */
+    const body = [
+      `From: ${data.get('first')} ${data.get('last')}`,
+      `Email: ${email}`,
+      `Phone: ${(data.get('phone') || '').trim() || '-'}`,
+      '', (data.get('message') || '').trim(),
+    ].join('\n');
+    window.location.href = `mailto:${to}`
+      + `?subject=${encodeURIComponent('Something odd, via ravyngames.com')}`
+      + `&body=${encodeURIComponent(body)}`;
+    note.className = 'cform__note mono';
+    note.textContent = 'Opening your mail app…';
+  });
+}
+
 /* ── text marquee ─────────────────────────────────────────────────────── */
 export function initMarquee({ text, symbol = '●', copies = 8, speed = 150 }) {
   const root = document.querySelector('.marquee');

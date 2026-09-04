@@ -42,7 +42,7 @@ interrogative carries the accent, the rest is a pale grey ground:
 |---|---|
 | `#studio` back | **What** we do |
 | `.reveal__panel` | **Why** choose us |
-| `#work` | **How** do we play |
+| `#work` | **How** we play |
 | `#team` | **Who** are we |
 | `#contact` | **Where** to find us |
 
@@ -64,6 +64,35 @@ Three things about `.bigword`:
 `#work` is the exception: its gallery runs to the bottom of the section, so
 there the word is `.bigword--flow` — in normal flow between the paragraph and
 the gallery, still hard right against the screen.
+
+## The courier, and the contact form
+
+`#contact` is a four-frame animation of a raven getting a message out of a
+bottle, plus the form. `assets/email-raven/` holds the frames.
+
+- **They are cropped to a shared box**, not each to its own. Crop them
+  individually and the bird jumps a few pixels sideways every time the frame
+  changes. Regenerate all four together or not at all.
+- **The frames snap; the CSS fade blends them.** Scroll picks an index and the
+  90ms transition does the rest. Scrubbing opacity continuously instead turns
+  the sequence into a smear of two ravens at once rather than one bird moving.
+- **`show()` sets the class on all four**, rather than moving it off the one it
+  thinks is showing. Tracking only the current index means anything else that
+  touches the class leaves two frames stacked on top of each other.
+- Cutting these out was the usual edge-gated fill, but the **glass bottle** is
+  nearly the same white as the paper. What saves it is its drawn outline: the
+  fill walks the paper, stops at the line, and the bottle's interior is simply a
+  region it never reached.
+
+The bubble is `:hover` and `:focus-within` on desktop, and a class toggled by
+tap on touch. It is anchored by its *right* edge so the tail lands near the
+bird's head instead of out over its tail feathers.
+
+**The form has no backend.** It validates, then hands off to `mailto:`. That
+works on a static host but opens the visitor's mail client, which plenty of
+people do not have set up — swap it for a real endpoint (Formspree, a worker,
+anything) before launch. The textarea is grown by script rather than
+`field-sizing: content`, which is not everywhere yet.
 
 ## The mark
 

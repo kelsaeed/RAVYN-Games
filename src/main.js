@@ -3,7 +3,8 @@
    ========================================================================== */
 
 import { createLogo3D } from './logo3d.js';
-import { initHero, initPanel, initMarquee, initSkim, initWatch, initWordmark, initRaven } from './effects.js';
+import { initHero, initPanel, initMarquee, initSkim, initWatch, initWordmark, initRaven,
+         initCourier, initContactForm } from './effects.js';
 
 const { gsap, ScrollTrigger, Lenis } = window;
 gsap.registerPlugin(ScrollTrigger);
@@ -45,6 +46,8 @@ initMarquee({ text: 'RAVYN Games', symbol: '●', copies: 8, speed: 150 });
 window.__skim = initSkim({ images: WORKS });
 initWatch();
 initWordmark();
+window.__courier = initCourier();
+initContactForm({ to: 'hello@ravyngames.com' });
 
 const logoRoot = document.getElementById('logo3d');
 if (logoRoot) {
