@@ -148,8 +148,15 @@ export function initRaven({ flowers, period = 110 }) {
   });
   root.addEventListener('pointerleave', stop);
 
-  /* No hover on a touch screen, so a tap spins it and lets it settle. */
+  /* On a touch screen a tap is ONE flower, not a spin. A roll you cannot aim
+     just parks on whatever it happens to land on, and on a phone that reads as
+     the page glitching rather than as something you did — so a tap steps to the
+     next bloom and stays there, and the spring transition above gets to play. */
+  const coarse = () => matchMedia('(hover: none)').matches;
   root.addEventListener('click', () => {
+    root.classList.add('is-used');
+    loadRest();
+    if (coarse()) { show(nextLoaded(at, 1)); return; }
     if (timer) { stop(); return; }
     start();
     setTimeout(stop, 1300);
@@ -299,8 +306,15 @@ export function initSkim({ images, label = 'Hold to skim' }) {
   if (!loop) return;
 
   const set = images.concat(images);          // render twice, wrap on one set
+
+  /* No loading="lazy". Every card is sized off its own image's intrinsic ratio
+     (height:100%, width:auto), so a card whose image has not arrived is zero
+     wide — and the wrap distance is measured across the whole first set. Lazily
+     loaded cards sit far outside the viewport and never trigger, so on a narrow
+     screen only the two or three visible ones ever had width and the strip
+     wrapped after them: two cards, a stall, then a snap back to the start. */
   loop.innerHTML = set.map((src) =>
-    `<figure class="skim__item"><img src="${src}" alt="" loading="lazy" decoding="async" draggable="false"></figure>`
+    `<figure class="skim__item"><img src="${src}" alt="" decoding="async" draggable="false"></figure>`
   ).join('');
 
   const cursor = document.createElement('div');
@@ -318,8 +332,14 @@ export function initSkim({ images, label = 'Hold to skim' }) {
   let mx = 0, my = 0, cx = 0, cy = 0;
   let startX = 0, startY = 0, lastX = 0, lastT = 0;
 
-  /* offsetLeft is meaningless until the images have intrinsic dimensions */
+  /* offsetLeft is meaningless until the images have intrinsic dimensions, and a
+     PARTIAL measurement is worse than none: the mark card is only as far along
+     as the cards that have loaded, so the wrap fires early and the strip visibly
+     snaps back. Nothing moves until the whole first set is in and the distance
+     is real. */
+  let ready = false;
   function measure() {
+    if (!ready) return;
     const items = loop.querySelectorAll('.skim__item');
     const first = items[0], mark = items[images.length];
     if (!first || !mark) return;
@@ -327,12 +347,22 @@ export function initSkim({ images, label = 'Hold to skim' }) {
     offset = gsap.utils.wrap(-setWidth, 0, offset);
     gsap.set(loop, { x: offset, force3D: true });
   }
-  measure();
-  loop.querySelectorAll('img').forEach((img) => {
-    if (img.complete) return;
-    img.addEventListener('load', measure, { once: true });
-    img.addEventListener('error', measure, { once: true });
+
+  const shots = [...loop.querySelectorAll('img')];
+  let pending = shots.filter((img) => !(img.complete && img.naturalWidth)).length;
+  const settled = () => {
+    if (--pending > 0) return;
+    ready = true;
+    measure();
+  };
+  shots.forEach((img) => {
+    if (img.complete && img.naturalWidth) return;
+    /* an image that 404s stays zero wide, which shortens the loop a little —
+       far better than holding the whole strip still waiting for it */
+    img.addEventListener('load', settled, { once: true });
+    img.addEventListener('error', settled, { once: true });
   });
+  if (pending <= 0) { ready = true; measure(); }
   new ResizeObserver(measure).observe(loop);
 
   const press = (down) => gsap.to(scale, {
@@ -407,10 +437,11 @@ export function initSkim({ images, label = 'Hold to skim' }) {
     get setWidth() { return setWidth; },
     get inView() { return inView; },
     get holding() { return holding; },
+    get ready() { return ready; },
   };
 
   gsap.ticker.add(() => {
-    if (!inView) return;
+    if (!inView || !ready) return;
     const dr = gsap.ticker.deltaRatio(60);
     const dt = dr / 60;
 
@@ -484,15 +515,23 @@ export function initWordmark() {
        time it pins and the word is fully on screen the trail has already
        broken cover. Starting at 'top top' left the word sitting over an empty
        reserved block for the first stretch of the stage. */
-    /* Phones get their own range. There the footer is a flow block exactly one
-       screen tall sitting at the very end of the document, so 'bottom bottom'
-       resolves to the last scrollable pixel — the trail would only finish at
-       the instant you hit the floor, and any drift in the measurement leaves
-       it stuck at 0. Ending at 'top center' completes the fan while the
-       wordmark is still mid-screen, and it stays finished after that.
+    /* Phones get their own range, and the old one was wrong in the obvious
+       direction: it ran from the footer's top edge entering to that same edge
+       hitting mid-screen, which is over and done with BEFORE the wordmark —
+       which sits a nav's height further down — has cleared the bottom of the
+       screen. You never saw it move, only the finished, stretched trail.
+
+       So: start 12% later, which is roughly where the wordmark itself enters,
+       and end 15% of a screen SHORT of the document floor. Both matter. The
+       late start means the fan begins on the frame the word appears; the early
+       end means it finishes with scroll still left underneath it, instead of
+       on the last reachable pixel where any drift in the measurement leaves it
+       permanently short. Expressed against the footer rather than the wordmark
+       because only the footer's own extent is guaranteed to be scrollable —
+       the word can run out of room below it and stall part-fanned.
        Function-based so invalidateOnRefresh re-reads them on rotate. */
-    start: () => (matchMedia('(max-width: 640px)').matches ? 'top bottom' : 'top bottom-=25%'),
-    end: () => (matchMedia('(max-width: 640px)').matches ? 'top center' : 'bottom bottom'),
+    start: () => (matchMedia('(max-width: 640px)').matches ? 'top bottom-=12%' : 'top bottom-=25%'),
+    end: () => (matchMedia('(max-width: 640px)').matches ? 'bottom bottom+=15%' : 'bottom bottom'),
     /* A number, not true. `scrub: true` pins the value to the scroll position
        exactly, so every wheel notch lands as a discrete jump in --p and the
        trail steps rather than glides. 0.6 lets it catch up over 0.6s, which is

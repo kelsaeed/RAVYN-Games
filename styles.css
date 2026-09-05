@@ -20,6 +20,16 @@
   --flood:     #023661;   /* the loud ground: the sliding panel and the footer */
   --flood-ink: #01223f;   /* darker flood, for occluders inside flood sections */
 
+  /* Every sticky "one screen" box measures itself against this, and it has to
+     be dvh rather than svh. On iOS the toolbars retract as you scroll and the
+     visible viewport grows; an svh box is sized for the toolbars being THERE,
+     so once they go it comes up short and you get a dead strip along the
+     bottom of the pinned section. dvh tracks the live viewport, so the box
+     grows with it and the strip never opens. Stage heights below stay in vh
+     (the large viewport) on purpose — those set document length, and a
+     document that changes height mid-scroll moves the scrollbar under you. */
+  --screen: 100dvh;
+
   --pad: clamp(20px, 4vw, 72px);
   --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
   --sans: "Helvetica Neue", Inter, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
@@ -142,12 +152,18 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
 .logo3d.is-used .logo3d__hint { opacity: 0 !important; animation: none; }
 @media (prefers-reduced-motion: reduce) { .logo3d__hint { animation: none; } }
 .logo3d__canvas canvas { display: block; width: 100% !important; height: 100% !important; }
-@media (max-width: 640px) { .logo3d { top: 46vh; width: 78vw; height: 26vh; } }
+@media (max-width: 640px) {
+  .logo3d { top: 46vh; width: 78vw; height: 26vh; }
+  /* The box is only 26vh here and the render fills 86% of it, so a label sat
+     2% off the floor lands under the bird's feet. Push it clear of the box —
+     it rides the same transform, so it still shrinks away as the mark docks. */
+  .logo3d__hint { bottom: -13%; }
+}
 
 /* ── Effect 1 — hero reveal ───────────────────────────────────────────── */
 .hero { height: 260vh; position: relative; }
 .hero__screen {
-  position: sticky; top: 0; height: 100svh;
+  position: sticky; top: 0; height: var(--screen);
   display: flex; flex-direction: column; justify-content: flex-end;
   padding: var(--pad); padding-bottom: clamp(28px, 6vh, 70px);
   overflow: hidden;
@@ -187,10 +203,10 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
      not need the pause to be legible. Keep holdPx() in effects.js in step. */
   --hold:  min(26vw, 320px);
   --slide: min(95vw, 1800px);
-  height: calc(100svh + var(--hold) + var(--slide));
+  height: calc(100vh + var(--hold) + var(--slide));
   position: relative;
 }
-.reveal__screen { position: sticky; top: 0; height: 100svh; overflow: hidden; }
+.reveal__screen { position: sticky; top: 0; height: var(--screen); overflow: hidden; }
 /* Both screens start their content on the same line. Centring each block to
    its own content height put the two section indices at different heights,
    so the label appeared to jump as the panel took over. */
@@ -430,14 +446,39 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
     gap: clamp(12px, 2.2vh, 24px);
     padding-top: clamp(84px, 14vh, 130px);
   }
+  /* ── the section names, on a phone ──────────────────────────────────
+     On a wide screen these are placed on the FLOOR of the section: a ground
+     the content stands on. A phone has no floor to spare — the content runs
+     the full height of the screen — so the word stops being a ground and
+     becomes what it reads as at this size: the section's title. It goes in
+     flow, at the top, above the content, left-aligned with everything else. */
   .bigword {
+    position: static;
     font-size: clamp(26px, 8.6vw, 56px);
     color: rgba(238, 241, 245, .2);
-    bottom: clamp(2px, 1vh, 10px);       /* down off the captions it sits behind */
+    text-align: left;
+    margin: 0 0 clamp(10px, 2.2vh, 24px);
   }
-  .studio .bigword {
-    position: static; align-self: flex-start; text-align: left;
+  /* .studio and .skim-section's word are already the first thing in the box;
+     the rest have to be let out of their absolute placement one at a time,
+     because each sits in a differently built container. */
+  .studio .bigword { align-self: flex-start; margin-bottom: 0; }
+
+  /* the flood panel is a row by default — stand it up so the name sits above
+     the list instead of beside it, and start the whole column under the nav */
+  .reveal__panel {
+    flex-direction: column; align-items: stretch;
+    padding-top: clamp(72px, 11vh, 104px);
   }
+  .reveal__panel .bigword { padding-inline: var(--pad); }
+
+  .skim-section .bigword--flow { padding-inline: var(--pad); }
+
+  .watch .bigword { padding-inline: var(--pad); }
+
+  .section--floor .bigword { padding-inline: var(--pad); }
+  /* the floor it used to need is now headroom it does not */
+  .section--floor { padding-bottom: clamp(60px, 10vh, 110px); }
   /* relative, never static: the bloom and the nudge are positioned off this
      box, so dropping it out of the positioning chain throws them onto .studio */
   .raven { position: relative; height: min(42vh, 400px); margin-inline: auto; }
@@ -490,7 +531,7 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
    to be 44vw tall with a 72vh ceiling, which on anything short and wide ran
    the cards off the bottom of the viewport. */
 .skim-section {
-  min-height: 100svh;
+  min-height: var(--screen);
   display: flex; flex-direction: column; justify-content: center;
   gap: clamp(8px, 1.6vh, 22px);
   padding-block: clamp(64px, 10vh, 120px) clamp(28px, 5vh, 64px);
@@ -535,7 +576,7 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
 /* ── the watch — they look away, then they look at you ────────────────── */
 .watch { height: 260vh; position: relative; }
 .watch__screen {
-  position: sticky; top: 0; height: 100svh; overflow: hidden;
+  position: sticky; top: 0; height: var(--screen); overflow: hidden;
   display: flex; flex-direction: column; justify-content: center;
   gap: clamp(24px, 5vh, 60px);
 }
@@ -668,7 +709,7 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
   background: var(--flood); color: #fff;
 }
 .footer__screen {
-  position: sticky; top: 0; height: 100svh; overflow: hidden;
+  position: sticky; top: 0; height: var(--screen); overflow: hidden;
   display: grid; grid-template-rows: auto 1fr auto;
   /* top rail has to clear the fixed nav, which floats over this section */
   padding: clamp(72px, 11vh, 104px) 0 clamp(20px, 4vh, 46px);
@@ -706,6 +747,9 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
      with dead space under it, depending on the window. */
   /* the vw term is per-letter sensitive: RAVYN is five caps where KROW was
      four, so it needs roughly a fifth less size to span the same width */
+  /* svh, not var(--screen), and on purpose: this is a "will it fit" ceiling.
+     Sizing it off the smallest viewport means it fits with the toolbars out
+     AND with them gone, and the wordmark does not resize itself mid-scroll. */
   font-size: clamp(62px, min(22.4vw, calc((100svh - 200px) / 1.72)), 415px);
 
   position: relative;
@@ -776,7 +820,7 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
    leaves the wordmark stranded in a field of navy, so the whole section
    unstacks and scrolls normally instead.                                */
 @media (max-width: 640px) {
-  .footer { height: auto; min-height: 100svh; }
+  .footer { height: auto; min-height: var(--screen); }
   .footer__screen {
     position: static; height: auto; display: block; overflow: visible;
     padding: clamp(88px, 13vh, 122px) 0 clamp(22px, 4vh, 38px);
@@ -808,7 +852,7 @@ h1 em, h2 em { font-style: italic; color: var(--accent); }
   .hero__line, .hero__sub { opacity: 1; }
   .hero, .reveal, .watch, .footer { height: auto; }
   .hero__screen, .reveal__screen, .watch__screen, .footer__screen { position: static; height: auto; }
-  .hero__screen { min-height: 100svh; }
+  .hero__screen { min-height: var(--screen); }
   .reveal__back, .reveal__panel { position: static; transform: none; padding-block: clamp(60px,12vh,140px); }
   .watch__face { transform: none !important; }
   .footer__screen { display: block; }
